@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hospoda 4.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --felt:#1a4a2e; --felt-l:#22613a; --felt-d:#102d1c;
+  --gold:#d4a843; --gold-l:#f0c860; --gold-d:#b8882a;
+  --cr:8px; --pbg:rgba(0,0,0,0.55); --pb:rgba(212,168,67,0.3);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:radial-gradient(ellipse 120% 80% at 50% 50%,var(--felt-l) 0%,var(--felt-d) 100%);
+  color:#f0e8d0;font-family:'Lato',sans-serif;min-height:100vh;overflow-x:hidden;
+}
+.hidden{display:none!important;}
+
+/* START */
+#start-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.sbox{
+  background:linear-gradient(160deg,rgba(0,0,0,.85),rgba(0,0,0,.6));
+  border:2px solid var(--gold);border-radius:20px;padding:50px 60px;
+  text-align:center;max-width:460px;
+  box-shadow:0 0 60px rgba(212,168,67,.15),inset 0 0 30px rgba(0,0,0,.3);
+}
+.sbox h1{font-family:'Cinzel',serif;font-size:3em;color:var(--gold);letter-spacing:4px;text-shadow:0 0 20px rgba(212,168,67,.4);margin-bottom:4px;}
+.sbox .sub{color:rgba(240,232,208,.55);font-size:.9em;letter-spacing:2px;text-transform:uppercase;margin-bottom:36px;}
+.srow{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:18px;}
+.srow label{font-size:.95em;color:rgba(240,232,208,.8);}
+.srow input[type=number]{width:68px;padding:9px;font-size:1.1em;text-align:center;background:rgba(255,255,255,.1);border:1px solid var(--pb);border-radius:8px;color:#fff;outline:none;}
+.srow input[type=number]:focus{border-color:var(--gold);}
+.btn-start{
+  background:linear-gradient(135deg,var(--gold),var(--gold-d));color:#111;border:none;
+  border-radius:10px;padding:13px 36px;font-family:'Cinzel',serif;font-size:1em;
+  font-weight:800;letter-spacing:2px;cursor:pointer;width:100%;margin-top:8px;
+  transition:.2s;box-shadow:0 4px 15px rgba(212,168,67,.3);
+}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(212,168,67,.5);}
+
+/* BOARD */
+#game-board{
+  display:grid;
+  grid-template-rows:auto auto 1fr auto;
+  min-height:100vh;
+  padding:6px 270px 6px 6px;
+  gap:6px;
+}
+
+/* HEADER */
+#game-header {
+  position: absolute; top: 15px; left: 15px; z-index: 1000;
+  background: transparent; border: none; padding: 0; backdrop-filter: none;
+}
+.h-title { font-family:'Cinzel',serif; color:var(--gold); font-size:1.6em; letter-spacing:2px; text-shadow: 2px 2px 8px rgba(0,0,0,0.8); }
+#dir-ind{font-size:.95em;color:#f0e8d0;}
+#active-info{font-size:.85em;color:rgba(240,232,208,.85);display:flex;align-items:center;gap:7px;}
+.clr-badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.75em;font-weight:700;letter-spacing:1px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);}
+
+/* TOP BOTS */
+#bots-top{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;min-height:1px;}
+
+/* MID ROW */
+#mid-row{display:flex;align-items:center;justify-content:center;gap:10px;flex:1;}
+#bot-left,#bot-right{flex-shrink:0;}
+
+/* TABLE CENTER */
+.table-center{
+  display:flex;align-items:center;justify-content:center;gap:30px;
+  background:radial-gradient(ellipse 80% 90% at 50% 50%,rgba(0,0,0,.22),rgba(0,0,0,.5));
+  border:2px solid rgba(212,168,67,.22);border-radius:50%;
+  padding:28px 46px;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.4),0 0 30px rgba(0,0,0,.3);
+  min-width:280px;min-height:200px;
+}
+.pile-area{text-align:center;}
+.pile-lbl{font-size:.65em;letter-spacing:2px;text-transform:uppercase;color:rgba(240,232,208,.45);margin-bottom:7px;}
+.discard-wrap{position:relative;width:100px;height:140px;margin:0 auto;}
+.d-under{
+  position:absolute;width:94px;
+  top:-15px;right:30px; /* Více nahoru a doprava */
+  border-radius:var(--cr);transform:rotate(20deg); /* Větší úhel */
+  opacity:1;filter:brightness(0.85);pointer-events:none; /* Bez průhlednosti, jen lehce tmavší */
+}
+.d-top{position:absolute;width:100px;top:0;left:0;border-radius:var(--cr);z-index:2;box-shadow:2px 3px 10px rgba(0,0,0,.7);}
+.deck-wrap{position:relative;display:inline-block;}
+#main-deck{width:100px;border-radius:var(--cr);cursor:pointer;box-shadow:2px 3px 10px rgba(0,0,0,.7);transition:transform .15s;display:block;}
+#main-deck:hover{transform:translateY(-4px) scale(1.04);}
+.deck-badge{position:absolute;bottom:-8px;right:-8px;background:var(--gold);color:#111;font-size:.68em;font-weight:700;padding:2px 6px;border-radius:10px;min-width:22px;text-align:center;}
+
+/* BOT PLAYERS */
+.bot-player{
+  background:var(--pbg);border:1px solid var(--pb);border-radius:14px;
+  padding:9px 12px;text-align:center;
+  min-width:150px;max-width:210px;
+  transition:border-color .3s,box-shadow .3s;backdrop-filter:blur(4px);
+  position:relative;
+}
+.bot-player.active-turn{border-color:var(--gold);box-shadow:0 0 22px rgba(212,168,67,.5);}
+.bot-player.thinking::after{
+  content:'🤔';position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+  font-size:1.3em;animation:tbounce .6s infinite alternate;
+}
+@keyframes tbounce{from{transform:translateX(-50%) translateY(0);}to{transform:translateX(-50%) translateY(-5px);}}
+.bh{display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:6px;flex-wrap:wrap;}
+.bn{font-family:'Cinzel',serif;font-size:.82em;color:var(--gold-l);letter-spacing:1px;}
+.bcc{font-size:.68em;color:rgba(240,232,208,.45);}
+.bot-tbl{margin-bottom:6px;}
+.bot-hand-area{display:flex;justify-content:center;align-items:flex-end;flex-wrap:nowrap;}
+
+/* HUMAN AREA */
+#human-area{
+  background:var(--pbg);border:2px solid var(--gold);border-bottom:none;
+  border-radius:20px 20px 0 0;padding:10px 20px 14px;text-align:center;
+  backdrop-filter:blur(6px);box-shadow:0 -4px 30px rgba(0,0,0,.4);
+}
+.hdr{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;}
+.hn{font-family:'Cinzel',serif;font-size:1em;color:var(--gold-l);letter-spacing:2px;}
+.hcrow{display:flex;justify-content:center;align-items:flex-end;gap:30px;overflow:visible;}
+.cg-lbl {
+  font-size:.62em; letter-spacing:2px; text-transform:uppercase;
+  color:rgba(240,232,208,.38); margin-bottom: 25px; /* Zvětšeno z 5px na 25px */
+}
+#human-hand{
+  display:flex;justify-content:center;align-items:flex-end;
+  padding:0 10px;overflow:visible;gap:5px;
+  flex-wrap:nowrap;
+}
+
+/* CARDS */
+.card{
+  border-radius:var(--cr);box-shadow:2px 2px 8px rgba(0,0,0,.6);
+  transition:transform .18s,box-shadow .18s;
+  display:inline-block;vertical-align:bottom;user-select:none;
+}
+/* Bot cards */
+.bt-card{width:72px;}
+.bh-card{width:54px;margin:0 -10px;}
+/* Human cards */
+.ht-card{width:102px;}
+.hh-card{width:98px;}   /* No negative margin – gap in flex */
+
+/* Playable: golden glow, float up slightly */
+.card.playable{
+  cursor:pointer;
+  box-shadow:0 0 0 2.5px var(--gold),0 0 16px rgba(212,168,67,.7);
+  transform:translateY(-8px);
+  z-index:5;position:relative;
+}
+.card.playable:hover{
+  transform:translateY(-20px) scale(1.07);
+  box-shadow:0 0 0 3px var(--gold-l),0 0 30px rgba(212,168,67,.95),0 14px 24px rgba(0,0,0,.6);
+  z-index:50;
+}
+
+/* Card placeholder */
+.card-ph{border:2px dashed rgba(212,168,67,.22);border-radius:var(--cr);background:rgba(0,0,0,.2);display:inline-block;}
+.bt-card.card-ph{width:72px;height:101px;}
+.ht-card.card-ph{width:102px;height:143px;}
+
+/* BADGES */
+.badge{display:inline-block;font-size:.62em;font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:10px;text-transform:uppercase;}
+.br{background:rgba(175,0,0,.85);color:#fff;}
+.bg{background:rgba(0,130,55,.85);color:#fff;}
+.bo{background:rgba(195,90,0,.9);color:#fff;}
+.ba{background:rgba(60,60,60,.85);color:#ccc;}
+
+/* MODAL */
+#modal-overlay{
+  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  background:rgba(0,0,0,.8);z-index:99999;
+  display:flex;justify-content:center;align-items:center;
+  backdrop-filter:blur(4px);
+}
+.mbox{
+  background:linear-gradient(160deg,#1f1f1f,#111);border:2px solid var(--gold);
+  border-radius:18px;padding:24px 30px;text-align:center;
+  max-width:560px;width:92vw;
+  box-shadow:0 0 40px rgba(212,168,67,.2);
+  max-height:92vh;overflow-y:auto;
+}
+#modal-title{font-family:'Cinzel',serif;color:var(--gold);font-size:1.2em;letter-spacing:2px;margin-bottom:14px;}
+.mc{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin:6px 0;}
+.mb{padding:8px 13px;border:2px solid transparent;border-radius:8px;font-size:.88em;font-weight:700;cursor:pointer;letter-spacing:1px;transition:.15s;}
+.mb:hover{transform:scale(1.06);}
+.mb.sel{border:2px solid #0f0!important;box-shadow:0 0 10px #0f07;}
+.c-red{background:#c62828;color:#fff;} .c-wht{background:#e0e0e0;color:#222;}
+.c-blu{background:#1565c0;color:#fff;} .c-grn{background:#2e7d32;color:#fff;}
+.c-yel{background:#f9a825;color:#111;} .c-gry{background:#444;color:#ddd;}
+.c-act{background:linear-gradient(135deg,var(--gold),var(--gold-d));color:#111;font-family:'Cinzel',serif;letter-spacing:1px;}
+
+/* Modal hand preview – your cards shown at bottom of modal */
+.modal-hp{margin-top:16px;border-top:1px solid rgba(212,168,67,.2);padding-top:12px;}
+.mhp-lbl{font-size:.6em;letter-spacing:2px;text-transform:uppercase;color:rgba(240,232,208,.4);margin-bottom:7px;}
+.mhp-cards{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;}
+.mhp-c{width:54px;border-radius:6px;box-shadow:1px 1px 5px rgba(0,0,0,.6);}
+
+/* DEV PANEL */
+#dev-panel{
+  position:fixed;top:10px;left:10px; /* Změněno z right na left */
+  background:rgba(0,0,0,.92);border:1px solid rgba(0,255,0,.25);
+  border-radius:10px;padding:10px 13px;z-index:2000;
+  font-size:.8em;color:#0f0;min-width:160px;
+}
+#dev-panel strong{display:block;font-family:'Cinzel',serif;color:var(--gold);font-size:.82em;margin-bottom:7px;letter-spacing:1px;}
+.drow{display:flex;align-items:center;gap:6px;margin:4px 0;color:#aaffaa;}
+.drow input[type=checkbox]{accent-color:#0f0;width:13px;height:13px;}
+
+/* LOG PANEL */
+#log-panel{
+  position:fixed;top:0;right:0;width:260px;height:100vh;
+  background:rgba(0,0,0,.78);border-left:1px solid var(--pb);
+  display:flex;flex-direction:column;z-index:900;
+}
+#log-panel h3{
+  font-family:'Cinzel',serif;font-size:.76em;color:var(--gold);
+  letter-spacing:2px;padding:11px 14px 8px;border-bottom:1px solid var(--pb);flex-shrink:0;
+}
+#log-entries{flex:1;overflow-y:auto;padding:7px 10px;display:flex;flex-direction:column;gap:5px;}
+.le{
+  background:rgba(255,255,255,.05);border-left:3px solid var(--gold);
+  border-radius:0 6px 6px 0;padding:5px 8px;font-size:.74em;line-height:1.45;
+  animation:leFade .45s ease;
+}
+@keyframes leFade{from{opacity:0;transform:translateX(10px);}to{opacity:1;transform:none;}}
+.le-who{font-weight:700;color:var(--gold-l);}
+.le-eff{color:rgba(240,232,208,.58);font-style:italic;}
+
+/* TOAST */
+#toast{
+  position:fixed;bottom:88px;left:calc(50% - 130px);transform:translateX(-50%);
+  background:rgba(0,0,0,.9);border:1px solid var(--gold);color:#f0e8d0;
+  padding:9px 20px;border-radius:22px;font-size:.9em;z-index:60000;
+  pointer-events:none;transition:opacity .3s;max-width:68vw;text-align:center;
+}
+#toast.hidden{opacity:0;}
+
+/* WARNING */
+#warn-bar{
+  position:fixed;bottom:130px;left:calc(50% - 130px);transform:translateX(-50%);
+  background:rgba(175,0,0,.92);color:#fff;padding:6px 18px;border-radius:18px;
+  font-size:.84em;font-weight:700;z-index:1001;pointer-events:none;text-align:center;
+}
+#warn-bar.hidden{display:none;}
+
+/* ARROW CANVAS */
+#arrow-canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:800;}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:rgba(212,168,67,.3);border-radius:3px;}
+
+/* ── RULES BUTTON ── */
+body:has(#start-screen:not(.hidden)) #rules-btn {
+  display: none !important;
+}
+#rules-btn {
+  position: fixed;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5000;
+  background: rgba(0,0,0,.88);
+  border: 1px solid rgba(212,168,67,0.4);
+  border-radius: 12px;
+  padding: 12px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: #d4a843;
+  font-family: 'Cinzel', serif;
+  font-size: .58em;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  width: 70px; /* TADY JE ZMĚNA: Zvětšeno z 52px, aby text nepřetékal */
+  box-shadow: 0 2px 12px rgba(0,0,0,.6);
+  transition: .2s;
+}
+#rules-btn:hover {
+  border-color: #d4a843;
+  box-shadow: 0 0 14px rgba(212,168,67,.35);
+  transform: translateY(-50%) scale(1.05);
+}
+#rules-btn.active {
+  border-color: #d4a843;
+  background: rgba(212,168,67,.18);
+}
+#rules-btn svg { width: 22px; height: 22px; }
+
+/* ── RULES OVERLAY ── */
+#rules-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0,0,0,.65);
+  backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#rules-panel {
+  background: linear-gradient(160deg, #182b1e 0%, #0e1a12 100%);
+  border: 2px solid #d4a843;
+  border-radius: 20px;
+  width: min(860px, 88vw);
+  height: min(640px, 86vh);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 60px rgba(0,0,0,.8), 0 0 25px rgba(212,168,67,.1);
+  overflow: hidden;
+  animation: rpIn .22s cubic-bezier(.22,.68,0,1.25);
+}
+@keyframes rpIn { from { transform: scale(.95); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+
+.rp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px 0;
+  flex-shrink: 0;
+}
+.rp-title {
+  font-family: 'Cinzel', serif;
+  color: #d4a843;
+  font-size: 1.15em;
+  letter-spacing: 3px;
+}
+.rp-close {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 8px;
+  padding: 5px 12px;
+  cursor: pointer;
+  color: #f0e8d0;
+  font-size: .85em;
+  transition: .15s;
+  font-family: 'Lato', sans-serif;
+}
+.rp-close:hover { background: rgba(255,80,80,.2); border-color: #ff6b6b; color: #ffaaaa; }
+
+.rp-tabs {
+  display: flex;
+  padding: 12px 22px 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(212,168,67,.2);
+  gap: 4px;
+}
+.rp-tab {
+  padding: 8px 18px;
+  cursor: pointer;
+  border-radius: 10px 10px 0 0;
+  font-family: 'Cinzel', serif;
+  font-size: .78em;
+  letter-spacing: 1px;
+  color: rgba(240,232,208,.45);
+  border: 1px solid transparent;
+  border-bottom: none;
+  transition: .15s;
+  background: transparent;
+}
+.rp-tab:hover { color: rgba(240,232,208,.8); background: rgba(255,255,255,.04); }
+.rp-tab.rp-active {
+  color: #f0c860;
+  background: rgba(212,168,67,.1);
+  border-color: rgba(212,168,67,.3);
+  border-bottom: 1px solid #182b1e;
+  margin-bottom: -1px;
+}
+
+.rp-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212,168,67,.25) transparent;
+}
+.rp-body::-webkit-scrollbar { width: 5px; }
+.rp-body::-webkit-scrollbar-thumb { background: rgba(212,168,67,.25); border-radius: 3px; }
+
+/* ── RULES CONTENT – clean printed-rulebook style ── */
+.rs-page { font-family: 'Lato', sans-serif; }
+.rs-rule {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 28px;
+  align-items: flex-start;
+}
+.rs-num {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #d4a843, #b8882a);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cinzel', serif; font-size: .85em; font-weight: 800;
+  color: #111; box-shadow: 0 2px 8px rgba(0,0,0,.5);
+  margin-top: 2px;
+}
+.rs-body { flex: 1; }
+.rs-body h3 {
+  font-family: 'Cinzel', serif;
+  font-size: .92em; font-weight: 800; letter-spacing: 2px;
+  color: #f0c860; margin-bottom: 7px;
+}
+.rs-body p { font-size: .84em; line-height: 1.7; color: rgba(240,232,208,.88); margin-bottom: 6px; }
+.rs-body ul { padding-left: 1.2em; margin-bottom: 6px; }
+.rs-body li { font-size: .84em; line-height: 1.65; color: rgba(240,232,208,.85); margin-bottom: 3px; }
+.rs-body strong { color: #f0e8d0; }
+.rs-body em { color: rgba(240,232,208,.65); font-style: italic; }
+
+.rs-divider {
+  border: none; border-top: 1px solid rgba(212,168,67,.12);
+  margin: 4px 0 28px;
+}
+.rs-intro {
+  background: rgba(212,168,67,.07);
+  border: 1px solid rgba(212,168,67,.18);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 26px;
+  display: flex; gap: 18px; flex-wrap: wrap;
+}
+.rs-intro-block { flex: 1; min-width: 150px; }
+.rs-intro-block .si-label {
+  font-size: .6em; letter-spacing: 2.5px; text-transform: uppercase;
+  color: rgba(212,168,67,.6); margin-bottom: 5px;
+}
+.rs-intro-block .si-val {
+  font-family: 'Cinzel', serif; font-size: 1.05em; color: #f0e8d0; letter-spacing: 1px;
+}
+.rs-tag {
+  display: inline-block; padding: 2px 9px; border-radius: 20px;
+  font-size: .72em; font-weight: 700; letter-spacing: .5px;
+  vertical-align: middle; margin: 0 2px;
+}
+.rs-tag.red   { background: #c62828; color: #fff; }
+.rs-tag.white { background: #ccc; color: #222; }
+.rs-tag.blue  { background: #1565c0; color: #fff; }
+.rs-tag.green { background: #2e7d32; color: #fff; }
+.rs-tag.yellow{ background: #f9a825; color: #111; }
+.rs-tag.purple{ background: #7b1fa2; color: #fff; }
+.rs-tag.gold  { background: #b8882a; color: #111; }
+
+.rs-note {
+  display: flex; gap: 10px; align-items: flex-start;
+  border-radius: 8px; padding: 9px 12px; margin: 8px 0;
+  font-size: .81em; line-height: 1.6;
+}
+.rs-note.tip  { background: rgba(21,101,192,.13); border: 1px solid rgba(21,101,192,.28); color: #b8d8ff; }
+.rs-note.warn { background: rgba(180,0,0,.13);    border: 1px solid rgba(180,0,0,.3);     color: #ffb8b8; }
+.rs-note.ok   { background: rgba(46,125,50,.13);  border: 1px solid rgba(46,125,50,.3);   color: #a8f0b8; }
+.rs-note .rs-note-icon { font-size: 1.1em; flex-shrink: 0; margin-top: 1px; }
+
+/* card images in rules */
+.rs-chain {
+  display: flex; align-items: center; gap: 4px;
+  flex-wrap: nowrap; margin: 14px 0;
+  background: rgba(0,0,0,.25); border-radius: 12px;
+  padding: 14px 18px;
+  overflow-x: auto;
+}
+.rs-chain-card {
+  position: relative; flex-shrink: 0;
+}
+.rs-chain-card img { width: 68px; border-radius: 7px; box-shadow: 2px 4px 12px rgba(0,0,0,.7); display: block; }
+.rs-chain-badge {
+  position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+  background: #c62828; color: #fff; font-size: .62em; font-weight: 700;
+  padding: 2px 6px; border-radius: 10px; white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,.5);
+}
+.rs-chain-arrow {
+  font-size: 1.4em; color: #22e058; flex-shrink: 0; margin: 0 2px;
+  animation: arrowPulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes arrowPulse { from { opacity:.4; } to { opacity:1; } }
+.rs-chain-result {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 3px; margin-left: 6px; flex-shrink: 0;
+}
+.rs-chain-eq { font-size: 1.4em; color: rgba(240,232,208,.5); }
+.rs-chain-sum { font-family: 'Cinzel', serif; font-size: 1.6em; color: #ff7070; font-weight: 800; }
+.rs-chain-label { font-size: .65em; color: rgba(240,232,208,.4); letter-spacing: 1px; text-transform: uppercase; }
+
+.rs-boost-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px; margin: 10px 0;
+}
+.rs-boost-item {
+  background: rgba(0,0,0,.3); border: 1px solid rgba(212,168,67,.12);
+  border-radius: 10px; padding: 10px; text-align: center;
+}
+.rs-boost-item img { width: 62px; border-radius: 6px; box-shadow: 2px 3px 10px rgba(0,0,0,.6); margin-bottom: 8px; }
+.rs-boost-name { font-size: .72em; font-weight: 700; letter-spacing: 1px; color: #f0c860; margin-bottom: 3px; }
+.rs-boost-desc { font-size: .68em; color: rgba(240,232,208,.6); line-height: 1.4; }
+
+/* ── CARD REFERENCE – RPG two-panel layout ── */
+.cr2-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  /* Fixed calc: panel height minus header (~52px) minus tabs (~50px) minus body padding(0 since rp-body padding handled separately) */
+  height: calc(min(640px, 86vh) - 108px);
+  overflow: hidden;
+}
+.cr2-sidebar {
+  border-right: 1px solid rgba(212,168,67,.15);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212,168,67,.2) transparent;
+}
+.cr2-sidebar::-webkit-scrollbar { width: 4px; }
+.cr2-sidebar::-webkit-scrollbar-thumb { background: rgba(212,168,67,.2); border-radius: 2px; }
+.cr2-section-header {
+  font-size: .58em; letter-spacing: 2.5px; text-transform: uppercase;
+  color: rgba(212,168,67,.5); padding: 10px 14px 4px;
+  font-family: 'Cinzel', serif;
+}
+.cr2-section-header:not(:first-child) { border-top: 1px solid rgba(212,168,67,.1); margin-top: 6px; }
+.cr2-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 12px; cursor: pointer;
+  transition: background .12s; border: none;
+  background: transparent; width: 100%; text-align: left;
+}
+.cr2-item:hover { background: rgba(255,255,255,.04); }
+.cr2-item.active { background: rgba(212,168,67,.12); border-right: 2px solid #d4a843; }
+.cr2-item img { width: 32px; border-radius: 4px; box-shadow: 1px 2px 6px rgba(0,0,0,.6); flex-shrink: 0; }
+.cr2-item-name { font-size: .77em; color: rgba(240,232,208,.8); line-height: 1.25; }
+.cr2-item-sub { font-size: .65em; color: rgba(240,232,208,.35); margin-top: 1px; }
+.cr2-item.active .cr2-item-name { color: #f0c860; }
+
+.cr2-preview {
+  overflow-y: auto;
+  padding: 22px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212,168,67,.2) transparent;
+}
+.cr2-preview::-webkit-scrollbar { width: 4px; }
+.cr2-preview::-webkit-scrollbar-thumb { background: rgba(212,168,67,.2); border-radius: 2px; }
+.cr2-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; gap: 12px; color: rgba(240,232,208,.2);
+}
+.cr2-empty-icon { font-size: 2.5em; }
+.cr2-empty-text { font-size: .78em; letter-spacing: 1px; }
+
+.cr2-card-hero {
+  display: flex; gap: 22px; align-items: flex-start; margin-bottom: 22px;
+}
+.cr2-card-hero img {
+  width: 180px; 
+  border-radius: 12px; 
+  box-shadow: 4px 8px 24px rgba(0,0,0,.75);
+  flex-shrink: 0;
+}
+.cr2-hero-info { flex: 1; }
+.cr2-hero-title {
+  font-family: 'Cinzel', serif; font-size: 1.05em; letter-spacing: 2px;
+  color: #f0c860; margin-bottom: 6px; font-weight: 800;
+}
+.cr2-hero-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.cr2-hero-desc { font-size: .84em; line-height: 1.7; color: rgba(240,232,208,.85); }
+.cr2-hero-desc p { margin-bottom: 6px; }
+.cr2-hero-desc .rs-note { font-size: 1em; }
+.cr2-hero-desc strong { color: #f0e8d0; }
+
+.rb { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: .7em; font-weight: 700; letter-spacing: 1px; }
+.rb-r { background: #c62828; color: #fff; }
+.rb-w { background: #ccc; color: #222; }
+.rb-b { background: #1565c0; color: #fff; }
+.rb-g { background: #2e7d32; color: #fff; }
+.rb-y { background: #f9a825; color: #111; }
+.rb-p { background: #7b1fa2; color: #fff; }
+.rb-gd { background: #b8882a; color: #111; }
+
+</style>
+</head>
+<body>
+
+<!-- RULES BUTTON (always visible during game) -->
+<button id="rules-btn" onclick="rOpenRules()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+    <line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/>
+  </svg>
+  Pravidla
+</button>
+
+<!-- RULES OVERLAY -->
+<div id="rules-overlay" class="hidden">
+  <div id="rules-panel">
+    <div class="rp-head">
+      <div class="rp-title">📖 Pravidla · Hospoda 4.0</div>
+      <button class="rp-close" onclick="rCloseRules()">✕ Zavřít</button>
+    </div>
+    <div class="rp-tabs">
+      <div class="rp-tab rp-active" id="rtab-rules" onclick="rSwitchTab('rules')">📋 Pravidla hry</div>
+      <div class="rp-tab" id="rtab-cards" onclick="rSwitchTab('cards')">🃏 Přehled karet</div>
+    </div>
+    <div class="rp-body" id="rp-body"></div>
+  </div>
+</div>
+
+
+<!-- START -->
+<div id="start-screen">
+  <div class="sbox">
+    <h1>HOSPODA</h1>
+    <p class="sub">Karetní hra · Verze 4.0</p>
+    <div class="srow"><label>Počet hráčů:</label><input type="number" id="player-count" min="2" max="7" value="4"></div>
+    <div class="srow">
+  <label>Tvé jméno:</label>
+  <input type="text" id="player-name" required placeholder="Zadej jméno..." style="width:120px; padding:9px; font-size:1em; text-align:center; background:rgba(255,255,255,.1); border:1px solid var(--pb); border-radius:8px; color:#fff; outline:none;">
+</div>
+    <button class="btn-start" onclick="startGame()">Zasednout ke stolu</button>
+    <button class="btn-start" onclick="rOpenRules()" style="margin-top:8px;background:transparent;border:1px solid rgba(212,168,67,0.5);color:var(--gold);font-size:.85em;">📖 Zobrazit pravidla</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" class="hidden">
+  <div class="mbox">
+    <h2 id="modal-title"></h2>
+    <div id="modal-content"></div>
+    <div id="modal-hp" class="modal-hp hidden">
+      <div class="mhp-lbl">Tvoje ruka:</div>
+      <div class="mhp-cards" id="mhp-cards"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+<div id="warn-bar" class="hidden"></div>
+<canvas id="arrow-canvas"></canvas>
+
+<!-- LOG PANEL -->
+<div id="log-panel" class="hidden">
+  <h3>📋 PRŮBĚH HRY</h3>
+  <div id="log-entries"></div>
+</div>
+
+<!-- GAME BOARD -->
+<div id="game-board" class="hidden">
+  <div id="game-header">
+  <span class="h-title">HOSPODA</span>
+  </div>
+  <div id="bots-top"></div>
+  <div id="mid-row">
+    <div id="bot-left"></div>
+    <div class="table-center">
+      <div class="pile-area">
+        <div class="pile-lbl"></div>
+        <div class="discard-wrap" id="discard-pile"></div>
+      </div>
+      <div class="pile-area">
+        <div class="pile-lbl"></div>
+        <div class="deck-wrap">
+          <img src="karty/rub.png" id="main-deck" class="card" alt="Balíček" onclick="handleDrawCard(event,0)">
+          <span class="deck-badge" id="deck-count">0</span>
+        </div>
+      </div>
+    </div>
+    <div id="bot-right"></div>
+  </div>
+  <div id="human-area">
+  <div class="hdr">
+    <span class="hn">TY</span>
+    <span id="player-status"></span>
+  </div>
+  
+  <div id="active-info" style="margin-bottom: 12px; font-size: 1.1em; color: #fff;"></div>
+  
+  <div class="hcrow">
+    <div>
+      <div class="cg-lbl">Karty na stole</div>
+      <span id="human-table"></span>
+    </div>
+    <div>
+      <div class="cg-lbl">Karty na ruce (<span id="hand-count">0</span>)</div>
+      <div id="human-hand"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ─── CONSTANTS ───────────────────────────────────────────────────────
+const COLORS=['červená','bílá','modrá','zelená','žlutá'];
+const BASIC_VALS=['7','8','9','10','J','Q','K','A'];
+const SPECIALS=['KARMA','KARMA','TROJKA','SPOCK','STOP'];
+const FILE_CLR={červená:'cervena',bílá:'bila',modrá:'modra',zelená:'zelena',žlutá:'zluta'};
+const BOOST_MAP={zelená:'ŠMÍRÁK',červená:'GRANÁT',bílá:'ŠATLAVA',modrá:'SNAJPR',žlutá:'ČENDŽR'};
+const CLR_CSS={červená:'#c62828',bílá:'#ccc',modrá:'#1565c0',zelená:'#2e7d32',žlutá:'#f9a825',fialová:'#7b1fa2'};
+
+// ─── STATE ───────────────────────────────────────────────────────────
+let deck,discardPile,players;
+let currentPlayerIndex,playDirection;
+let activeColor,activeValue;
+let pendingDraws;
+let gameEnded,isAnimating;
+let pendingModalCB;
+let snajprFrom;
+let cendžr;
+let botThinking=false;
+const PLAYER_COLORS = ['#ffb300', '#00e5ff', '#69f0ae', '#ff5252', '#b388ff', '#ffff00', '#ff80ab'];
+window.addEventListener('DOMContentLoaded', () => {
+  const savedName = localStorage.getItem('hospoda_player_name');
+  if (savedName) document.getElementById('player-name').value = savedName;
+});
+let gameStats = { start: 0, turns: 0, myDraws: 0, forcedDraws: 0 }; // NOVÉ: Statistiky
+
+function initState(){
+  deck=[];discardPile=[];players=[];
+  currentPlayerIndex=0;playDirection=1;
+  activeColor=null;activeValue=null;
+  pendingDraws=0;
+  gameEnded=false;isAnimating=false;
+  pendingModalCB=null;snajprFrom=null;
+  cendžr={active:false,color:null,playerId:null};
+  botThinking=false;
+  gameStats = { start: Date.now(), turns: 0, myDraws: 0, forcedDraws: 0 };
+  document.getElementById('log-entries').innerHTML='';
+}
+
+// ─── DECK ─────────────────────────────────────────────────────────────
+function mkCard(color,value,special=false){
+  return{color,value,isSpecial:special,isBoost:!special&&value==='8',
+    revealed:false,
+    image:special?`karty/${value.toLowerCase()}.png`:`karty/${FILE_CLR[color]}_${value}.png`};
+}
+function createDeck(){
+  const d=[];
+  for(const c of COLORS) for(const v of BASIC_VALS) d.push(mkCard(c,v));
+  for(const sp of SPECIALS) d.push(mkCard('fialová',sp,true));
+  return d;
+}
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){const j=0|Math.random()*(i+1);[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function reshuffleIfNeeded(){
+  if(deck.length===0&&discardPile.length>1){
+    const top=discardPile.pop();
+    deck=shuffle(discardPile.map(c=>({...c,revealed:false})));
+    discardPile=[top];
+    showToast('♻️ Odhazovací balíček zamíchán zpět!');
+    renderGame();
+  }
+}
+function popDeck(){reshuffleIfNeeded();return deck.length?deck.pop():null;}
+function giveCard(pi){
+  const c=popDeck();
+  if(c){
+    players[pi].hand.push(c);
+    if(pi === 0) gameStats.myDraws++; // Zápis statistiky lízání
+  }
+  return!!c;
+}
+
+// ─── SETUP ───────────────────────────────────────────────────────────
+function startGame(){
+  const pName = document.getElementById('player-name').value.trim();
+  if (!pName) { showToast('Než začneš, zadej své jméno!'); return; }
+  localStorage.setItem('hospoda_player_name', pName);
+
+  const n=parseInt(document.getElementById('player-count').value);
+  if(n<2||n>7){showToast('Počet hráčů: 2–7');return;}
+  initState();
+  document.getElementById('start-screen').classList.add('hidden');
+  ['game-board','log-panel'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
+
+  deck=shuffle(createDeck());
+  for(let i=0;i<n;i++) {
+    players.push({
+      id:i, name: i===0 ? pName : `Bot ${i}`, color: PLAYER_COLORS[i],
+      hand:[], tableCards:[], skips:0
+    });
+  }
+
+  for(const p of players){
+    for(let i=0;i<3;i++) giveCard(p.id);
+    const tc=popDeck(); if(tc) p.tableCards.push(tc);
+  }
+
+  let first=null,safety=0;
+  while(!first&&safety++<120){
+    reshuffleIfNeeded();
+    const c=popDeck(); if(!c) break;
+    if(c.isSpecial||['7','8','A'].includes(c.value)) deck.unshift(c);
+    else first=c;
+  }
+  if(!first) first=mkCard('červená','9');
+  discardPile.push(first);
+  activeColor=first.color; activeValue=first.value;
+
+  renderGame();
+  setTimeout(maybeRunBot,900);
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────
+function nextIdx(from=currentPlayerIndex){return(from+playDirection+players.length)%players.length;}
+
+function colorBadge(color){
+  const bg=CLR_CSS[color]||'#555';
+  const tc=color==='bílá'?'color:#222':'';
+  return `<span class="clr-badge" style="background:${bg};${tc}">${(color||'').toUpperCase()}</span>`;
+}
+function cardLabel(card){
+  if(!card) return '?';
+  if(card.isSpecial) return card.value;
+  return `${card.color} ${card.value}`;
+}
+
+function isValidMove(card){
+  if(!card||gameEnded) return false;
+  if(pendingDraws>0) return card.value==='7'||card.value==='KARMA';
+  
+  // OPRAVA ČENDŽRA: Musí se hrát striktně jen požadovaná barva. Žádné speciály.
+  if(cendžr.active){
+    return card.color === cendžr.color; 
+  }
+  
+  // Q lze zahrát vždy a na cokoliv podle pravidel (pokud neprobíhá Čendžr nebo 7)
+  if(card.isSpecial || card.value === 'Q') return true;
+  return card.color===activeColor||card.value===activeValue;
+}
+function hasPlayable(pi){
+  const p=players[pi];
+  return p.hand.some(c=>isValidMove(c)) || p.tableCards.some(c=>isValidMove(c));
+}
+
+// ─── WIN ──────────────────────────────────────────────────────────────
+function checkWin(pi){
+  const p=players[pi];
+  if(p.hand.length===0 && p.tableCards.length===0){
+    gameEnded=true;
+    const timeSec = Math.floor((Date.now() - gameStats.start)/1000);
+    const mins = Math.floor(timeSec/60);
+    const secs = timeSec % 60;
+    
+    setTimeout(()=>{
+      showModalNoHand(`${pi===0?'🏆':'🎉'} KONEC HRY`,`
+        <p style="font-size:1.8em;font-family:'Cinzel',serif;color:var(--gold-l);margin-bottom:15px">${pi===0?'🏆':'🎉'} ${p.name} vyhrál!</p>
+        <div style="text-align:left; background:rgba(0,0,0,0.5); padding:15px; border-radius:10px; margin-bottom:20px; font-size:0.9em; color:#ddd; border:1px solid rgba(212,168,67,0.3)">
+            <strong>📊 STATISTIKY HRY:</strong><br><br>
+            ⏱️ Čas hry: ${mins} min ${secs} s<br>
+            🔄 Odehráno tahů: ${gameStats.turns}<br>
+            🃏 Líznul jsi karet: ${gameStats.myDraws}<br>
+            💣 Rozdal jsi ostatním (nebo donutil stát): ${gameStats.forcedDraws}x
+        </div>
+        <button class="mb c-act" style="width:100%;padding:13px;font-size:1em" onclick="location.reload()">🔄 Nová hra</button>
+      `);
+    },400);
+    return true;
+  }
+  return false;
+}
+
+// ─── DRAW N ───────────────────────────────────────────────────────────
+function drawN(pi,n,cb){
+  if(n<=0){if(cb)cb();return;}
+  reshuffleIfNeeded();
+  if(!deck.length){if(cb)cb();return;}
+
+  const src = document.getElementById('main-deck');
+  const tgt = pi === 0 ? document.getElementById('human-hand') : document.getElementById(`player-area-${pi}`);
+
+  runFly(src, tgt, 'karty/rub.png', () => {
+    players[pi].hand.push(deck.pop());
+    if(pi === 0) gameStats.myDraws++; // Zápis statistiky lízání z trestů
+    renderGame();
+    setTimeout(() => drawN(pi, n - 1, cb), 100);
+  });
+}
+
+// ─── ADVANCE TURN ─────────────────────────────────────────────────────
+function advanceTurn(){
+  if(gameEnded) return;
+  gameStats.turns++; // Zápis odehraných tahů
+  const from=snajprFrom!==null?snajprFrom:currentPlayerIndex;
+  snajprFrom=null;
+  currentPlayerIndex=(from+playDirection+players.length)%players.length;
+
+  if(cendžr.active&&currentPlayerIndex===cendžr.playerId){
+    cendžr={active:false,color:null,playerId:null};
+    showToast('🔄 ČENDŽR efekt skončil');
+  }
+
+  while(players[currentPlayerIndex].skips>0&&!gameEnded){
+    const p=players[currentPlayerIndex];
+    addLog(p.name,'','stojí jedno kolo');
+    p.skips--;
+    currentPlayerIndex=(currentPlayerIndex+playDirection+players.length)%players.length;
+    if(cendžr.active&&currentPlayerIndex===cendžr.playerId){
+      cendžr={active:false,color:null,playerId:null};
+    }
+  }
+
+  renderGame();
+  updateWarn();
+  setTimeout(maybeRunBot,120);
+}
+
+function updateWarn(){
+  const el=document.getElementById('warn-bar');
+  if(pendingDraws>0&&currentPlayerIndex===0){
+    el.textContent=`⚠️ Musíš zahrát 7 nebo lízeš ${pendingDraws} karet!`;
+    el.classList.remove('hidden');
+  } else if(cendžr.active&&currentPlayerIndex===0&&!hasPlayable(0)){
+    el.textContent=`⚠️ Nemáš ${(cendžr.color||'').toUpperCase()}! Klikni na balíček → lízeš 2.`;
+    el.classList.remove('hidden');
+  } else {
+    el.classList.add('hidden');
+  }
+}
+
+// ─── LOG ─────────────────────────────────────────────────────────────
+function addLog(who, card, effect){
+  const el=document.getElementById('log-entries');
+  if(!el) return;
+  const div=document.createElement('div');
+  div.className='le';
+  
+  // Vyhledáme barvu hráče pro obarvení jména v logu
+  const playerObj = players.find(p => p.name === who);
+  const nameColor = playerObj ? playerObj.color : 'var(--gold-l)';
+  
+  let msg = `<span class="le-who" style="color:${nameColor}">${who}</span>`;
+  if(card) msg += ` - <strong>${card}</strong>`;
+  if(effect) {
+    if(effect.startsWith('na')) msg += ` ${effect}`; 
+    else msg += ` - ${effect}`;
+  }
+  
+  div.innerHTML = msg;
+  el.appendChild(div);
+  el.scrollTop=el.scrollHeight;
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────────
+function showModal(title,html,showHand=true){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-content').innerHTML=html;
+  const hp=document.getElementById('modal-hp');
+  const hpc=document.getElementById('mhp-cards');
+  
+  if(showHand&&players[0]&&(players[0].hand.length>0 || players[0].tableCards.length>0)){
+    let cardsHtml = '';
+    // Karty na stole se zlatým ohraničením
+    players[0].tableCards.forEach(c => {
+      cardsHtml += `<img src="${c.image}" class="mhp-c" style="border:2px solid var(--gold); margin-right:4px;" title="Na stole: ${c.color} ${c.value}">`;
+    });
+    // Karty v ruce
+    players[0].hand.forEach(c => {
+      cardsHtml += `<img src="${c.image}" class="mhp-c" title="V ruce: ${c.color} ${c.value}">`;
+    });
+    
+    hpc.innerHTML = cardsHtml;
+    // Změníme text popisku v HTML pomocí JS
+    const lbl = document.querySelector('.mhp-lbl');
+    if(lbl) lbl.textContent = "TVOJE KARTY (Zlatý okraj = leží na stole)";
+    
+    hp.classList.remove('hidden');
+  } else {
+    hp.classList.add('hidden');
+  }
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function showModalNoHand(t,h){showModal(t,h,false);}
+function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');}
+window.submitMC=v=>{closeModal();if(pendingModalCB)pendingModalCB(v);};
+window.submitMT=i=>{closeModal();if(pendingModalCB)pendingModalCB(parseInt(i));};
+
+window._kCol=null;window._kVal=null;
+window.kPickColor=function(c,btn){window._kCol=c;document.querySelectorAll('.kcb').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');};
+window.kPickValue=function(v,btn){window._kVal=v;document.querySelectorAll('.kvb').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');};
+window.submitKarma=function(){
+  if(!window._kCol||!window._kVal){showToast('Vyber barvu i hodnotu!');return;}
+  closeModal();if(pendingModalCB)pendingModalCB({color:window._kCol,value:window._kVal});
+};
+
+// ─── TOAST ───────────────────────────────────────────────────────────
+let _tt=null;
+function showToast(msg,dur=2800){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.remove('hidden');
+  clearTimeout(_tt);_tt=setTimeout(()=>el.classList.add('hidden'),dur);
+}
+
+// ─── KARMA DEFENSE ───────────────────────────────────────────────────
+function tryDefend(defIdx,atkIdx,onYes,onNo){
+  const def=players[defIdx];
+  const ki=def.hand.findIndex(c=>c.value==='KARMA');
+  if(ki===-1){onNo();return;}
+
+  if(defIdx===0){
+    pendingModalCB=choice=>{
+      if(choice==='yes'){
+        discardPile.push(def.hand.splice(ki,1)[0]);
+        addLog(def.name,'KARMA','odrazil útok zpět!');
+        renderGame();onYes();
+      } else onNo();
+    };
+    showModal('🛡️ OBRANA!',`
+      <p style="margin-bottom:14px">Na tebe míří útok!<br>Chceš obětovat KARMU a odrazit ho zpět?</p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="mb c-act" onclick="submitMC('yes')">🛡️ Odrazit!</button>
+        <button class="mb c-gry" onclick="submitMC('no')">❌ Přijmout</button>
+      </div>
+    `,false);
+  } else {
+    if(def.hand.length>=3){
+      discardPile.push(def.hand.splice(ki,1)[0]);
+      addLog(def.name,'KARMA','odrazil útok!');
+      showToast(`${def.name} odrazil útok KARMOU! 🛡️`);
+      renderGame();setTimeout(onYes,380);
+    } else onNo();
+  }
+}
+
+// ─── CARD EFFECTS ────────────────────────────────────────────────────
+function processEffect(pi, card, choices, done) {
+  const p = players[pi];
+  const eff = card.value === 'KARMA' ? choices.value : card.value;
+  const effClr = card.value === 'KARMA' ? choices.color : card.color;
+  
+  // Zjištění cíle (kdo je na řadě po mně, nebo koho jsem si vybral)
+  let tgt = nextIdx(pi);
+  if (choices && choices.target !== undefined && choices.target !== null) {
+      tgt = choices.target;
+  }
+
+  // Uložení stavu barvy/hodnoty pro další tah
+  if (card.isSpecial && card.value !== 'KARMA') {
+    // TROJKA, SPOCK, STOP nemění barvu
+  } else if (eff === 'Q') {
+    activeColor = choices.color || effClr; activeValue = 'Q';
+  } else {
+    activeColor = effClr; activeValue = eff;
+  }
+
+  // PŘÍPRAVA LOGU: Jméno karty
+  const cardName = card.value === 'KARMA' ? `KARMA (jako ${effClr} ${eff})` : `${card.color} ${card.value}`;
+  let logText = '';
+
+  // VYHODNOCENÍ EFEKTŮ A LOGOVÁNÍ
+  if (eff === '10') {
+    playDirection *= -1;
+    logText = `obrátil směr hry`;
+  }
+  else if (eff === '7') {
+    pendingDraws += 2;
+    if (pi === 0) gameStats.forcedDraws += 2;
+    logText = `na - ${players[tgt].name} (líže +2)`;
+  }
+  else if (eff === 'A') {
+    players[tgt].skips += 1;
+    if (pi === 0) gameStats.forcedDraws += 1;
+    logText = `na - ${players[tgt].name} (stojí 1 kolo)`;
+  }
+  else if (card.value === 'STOP') {
+    players[tgt].skips += 2;
+    if (pi === 0) gameStats.forcedDraws += 1;
+    addLog(p.name, 'STOP', `na - ${players[tgt].name} (stojí 2 kola)`);
+    done(); return;
+  }
+  else if (card.value === 'TROJKA') {
+    if (pi === 0) gameStats.forcedDraws += 3;
+    addLog(p.name, 'TROJKA', `na - ${players[tgt].name} (líže 3)`);
+    drawN(tgt, 3, () => { renderGame(); done(); });
+    return;
+  }
+  else if (card.value === 'SPOCK') {
+    addLog(p.name, 'SPOCK', `na - ${players[tgt].name} (výměna karet)`);
+    // (Animace a výměna uvnitř SPOCKU zůstává stejná, sem vlož svůj kód pro animaci spocka z původní fce, pokud ho tam máš)
+    const tmp = p.hand; p.hand = players[tgt].hand; players[tgt].hand = tmp;
+    renderGame(); done(); return;
+  }
+  else if (card.value === '8') {
+    const boost = BOOST_MAP[card.color] || '?';
+    const bName = `${boost} (${card.color} 8)`;
+
+    if (boost === 'ŠMÍRÁK') {
+      tryDefend(tgt, pi,
+        () => {
+          p.tableCards.push(...p.hand); p.hand = []; p.tableCards.forEach(c => c.revealed = true);
+          addLog(p.name, bName, `na - ${players[tgt].name} 🛡️ ODRAŽENO! (${p.name} vykládá karty na stůl)`);
+          renderGame(); done();
+        },
+        () => {
+          players[tgt].tableCards.push(...players[tgt].hand); players[tgt].hand = []; players[tgt].tableCards.forEach(c => c.revealed = true);
+          addLog(p.name, bName, `na - ${players[tgt].name} (cíl vykládá karty na stůl)`);
+          renderGame(); done();
+        }
+      ); return;
+    }
+    else if (boost === 'GRANÁT') {
+      tryDefend(tgt, pi,
+        () => {
+          addLog(p.name, bName, `🛡️ ODRAŽENO hráčem ${players[tgt].name}! (útočník líže ${players.length})`);
+          drawN(pi, players.length, () => { renderGame(); done(); });
+        },
+        () => {
+          addLog(p.name, bName, `všichni ostatní lížou 1 kartu`);
+          // Zde zůstává tvoje logika pro rozdání 1 karty všem ostatním...
+          players.forEach((pl, i) => { if(i!==pi) { giveCard(i); } });
+          renderGame(); done();
+        }
+      ); return;
+    }
+    else if (boost === 'ŠATLAVA') {
+      tryDefend(tgt, pi,
+        () => {
+          p.skips += 1;
+          addLog(p.name, bName, `na - ${players[tgt].name} 🛡️ ODRAŽENO! (útočník stojí 1 kolo + líže 2)`);
+          drawN(pi, 2, () => { renderGame(); done(); });
+        },
+        () => {
+          players[tgt].skips += 1;
+          addLog(p.name, bName, `na - ${players[tgt].name} (cíl stojí 1 kolo + líže 2)`);
+          drawN(tgt, 2, () => { renderGame(); done(); });
+        }
+      ); return;
+    }
+    else if (boost === 'SNAJPR') {
+      tryDefend(tgt, pi,
+        () => {
+          addLog(p.name, bName, `na - ${players[tgt].name} 🛡️ ODRAŽENO! (útočník líže 2)`);
+          drawN(pi, 2, () => { snajprFrom = tgt; renderGame(); done(); });
+        },
+        () => {
+          addLog(p.name, bName, `na - ${players[tgt].name} (cíl líže 2)`);
+          drawN(tgt, 2, () => { snajprFrom = tgt; renderGame(); done(); });
+        }
+      ); return;
+    }
+    else if (boost === 'ČENDŽR') {
+      const clr = choices.color || effClr;
+      cendžr = { active: true, color: clr, playerId: pi };
+      activeColor = clr; activeValue = '8';
+      addLog(p.name, bName, `(mění barvu na ${clr.toUpperCase()})`);
+      showToast(`🔄 ČENDŽR! Musí hrát ${clr.toUpperCase()}`);
+      done(); return;
+    }
+  }
+  else {
+     // Obyčejná karta nebo Dáma
+     if (eff === 'Q') logText = `(mění barvu na ${activeColor.toUpperCase()})`;
+  }
+
+  // Zápis standardního logu
+  addLog(p.name, cardName, logText);
+  done();
+}
+
+// ─── PLAY CARD ────────────────────────────────────────────────────────
+function playCard(pi,card,isFromTable,cardIdx){
+  if(isFromTable) players[pi].tableCards.splice(cardIdx,1);
+  else players[pi].hand.splice(cardIdx,1);
+
+  if(players[pi].hand.length===0 && players[pi].tableCards.length===0 && card.isSpecial){
+    const c=popDeck();if(c) players[pi].hand.push(c);
+    if(pi===0) showToast('⚠️ Speciálem nelze vyhrát! Lížeš 1 kartu.');
+    addLog(players[pi].name,'','speciálem nelze vyhrát – líže 1');
+  }
+
+  discardPile.push(card);
+  const done=()=>{if(!checkWin(pi))advanceTurn();};
+
+  // ── Human modals ──
+  if(pi===0){
+    if(card.value==='KARMA'){
+      if(pendingDraws>0){
+        pendingModalCB=clr=>{
+          addLog('Ty','KARMA',`jako ${clr} 7`);
+          processEffect(pi,card,{color:clr,value:'7',target:null},done);
+        };
+        let h=`<p style="margin-bottom:10px;color:#ffa">Probíhá řetěz 7! KARMA jako 7 – vyber barvu:</p><div class="mc">`;
+        COLORS.forEach(c=>h+=`<button class="mb ${cBtn(c)}" onclick="submitMC('${c}')">${c.toUpperCase()}</button>`);
+        h+=`</div>`;
+        showModal('🎴 KARMA jako 7',h);return;
+      }
+      window._kCol=null;window._kVal=null;
+      pendingModalCB=res=>{
+        addLog('Ty','KARMA',`jako ${res.color} ${res.value}`);
+        processEffect(pi,card,{color:res.color,value:res.value,target:null},done);
+      };
+      const vals=BASIC_VALS.filter(v=>v!=='8');
+      let h=`<p style="margin:0 0 8px">Vyber barvu:</p><div class="mc">`;
+      COLORS.forEach(c=>h+=`<button class="mb kcb ${cBtn(c)}" onclick="kPickColor('${c}',this)">${c.toUpperCase()}</button>`);
+      h+=`</div><p style="margin:10px 0 8px">Vyber hodnotu (ne 8):</p><div class="mc">`;
+      vals.forEach(v=>h+=`<button class="mb kvb c-gry" onclick="kPickValue('${v}',this)">${v}</button>`);
+      h+=`</div><button class="mb c-act" style="width:100%;margin-top:12px" onclick="submitKarma()">✅ POTVRDIT</button>`;
+      showModal('🎴 KARMA – Co hraješ?',h);return;
+    }
+
+    if(card.value==='Q'||(card.value==='8'&&card.color==='žlutá')){
+      const ttl=card.value==='Q'?'🎨 Dáma – Vyber barvu':'🎨 ČENDŽR – Vyber barvu';
+      pendingModalCB=clr=>{
+        addLog('Ty',cardLabel(card),`barva: ${clr}`);
+        processEffect(pi,card,{color:clr,value:card.value,target:null},done);
+      };
+      let h=`<div class="mc">`;
+      COLORS.forEach(c=>h+=`<button class="mb ${cBtn(c)}" onclick="submitMC('${c}')">${c.toUpperCase()}</button>`);
+      h+=`</div>`;
+      showModal(ttl,h);return;
+    }
+
+    if(card.value==='SPOCK'){
+      // SPOCK can target ANY other player
+      pendingModalCB=tgt=>{
+        addLog('Ty','SPOCK',`vyměnil s ${players[tgt].name}`);
+        processEffect(pi,card,{color:null,value:card.value,target:tgt},done);
+      };
+      let h=`<p style="margin-bottom:12px">S kým chceš vyměnit všechny karty?</p><div class="mc" style="flex-wrap:wrap;gap:8px">`;
+      players.forEach((p,i)=>{
+        if(i===pi) return;
+        h+=`<button class="mb c-gry" onclick="submitMT(${i})">${p.name}<br><small style="opacity:.6">${p.hand.length} karet</small></button>`;
+      });
+      h+=`</div>`;
+      showModal('🖖 SPOCK – Vyměň karty',h);return;
+    }
+
+    if(card.value==='8'&&card.color==='modrá'){
+      pendingModalCB=tgt=>{
+        addLog('Ty','SNAJPR',`→ ${players[tgt].name}`);
+        processEffect(pi,card,{color:null,value:card.value,target:tgt},done);
+      };
+      let h=`<p style="margin-bottom:12px">Vyber cíl SNAJPRA (líže 2):</p><div class="mc" style="flex-wrap:wrap;gap:8px">`;
+      players.forEach((p,i)=>{
+        if(i===pi) return;
+        h+=`<button class="mb c-gry" onclick="submitMT(${i})">${p.name}<br><small style="opacity:.6">${p.hand.length} karet</small></button>`;
+      });
+      h+=`</div>`;
+      showModal('🎯 SNAJPR – Vyber cíl',h);return;
+    }
+
+    addLog('Ty',cardLabel(card),'');
+    processEffect(pi,card,{color:card.color,value:card.value,target:null},done);
+    return;
+  }
+
+  // ── Bot: auto-resolve ──
+  const clr=botPreferColor(pi);
+  let choices={color:clr,value:card.value,target:null};
+  if(card.value==='KARMA'){
+    const mv=pendingDraws>0?'7':botPickKarmaValue(pi);
+    choices={color:clr,value:mv,target:null};
+    addLog(players[pi].name,'KARMA',`jako ${clr} ${mv}`);
+  } else if(card.value==='SPOCK'){
+    choices.target=botPickSpockTarget(pi);
+    addLog(players[pi].name,'SPOCK',`s ${players[choices.target].name}`);
+  } else if(card.value==='8'&&card.color==='modrá'){
+    choices.target=botPickTarget(pi);
+    addLog(players[pi].name,'SNAJPR',`→ ${players[choices.target].name}`);
+  } else if(card.value==='Q'||(card.value==='8'&&card.color==='žlutá')){
+    addLog(players[pi].name,cardLabel(card),`barva: ${clr}`);
+  } else {
+    addLog(players[pi].name,cardLabel(card),'');
+  }
+  processEffect(pi,card,choices,done);
+}
+
+function cBtn(color){
+  return {červená:'c-red',bílá:'c-wht',modrá:'c-blu',zelená:'c-grn',žlutá:'c-yel'}[color]||'c-gry';
+}
+
+// ─── INPUT HANDLERS ───────────────────────────────────────────────────
+function handlePlayCard(event,pi,cardIdx,isFromTable){
+  if(gameEnded||isAnimating||pi!==currentPlayerIndex) return;
+  const card=isFromTable?players[pi].tableCards[cardIdx]:players[pi].hand[cardIdx];
+  if(!isValidMove(card)) return;
+  const src=event&&event.target?event.target:null;
+  const tgtEl=document.getElementById('discard-pile');
+  if(src&&tgtEl){
+    runFly(src,tgtEl,card.image,()=>playCard(pi,card,isFromTable,cardIdx));
+  } else {
+    playCard(pi,card,isFromTable,cardIdx);
+  }
+}
+
+function handleDrawCard(event,pi){
+  if(gameEnded||isAnimating||pi!==currentPlayerIndex) return;
+  
+  // Řešení řetězení sedmiček
+  if(pendingDraws>0){
+    const n=pendingDraws;pendingDraws=0;
+    addLog(players[pi].name,'',`přijal trest: líže ${n}`);
+    drawN(pi,n,()=>{updateWarn();advanceTurn();});
+    return;
+  }
+  
+  // OPRAVA ČENDŽRA: Pokud je aktivní Čendžr a hráč bere z balíčku, bere rovnou 2.
+  if(cendžr.active){
+    addLog(players[pi].name,'',`nemá barvu ČENDŽR – líže 2`);
+    drawN(pi,2,()=>{updateWarn();advanceTurn();});
+    return;
+  }
+  
+  // Standardní líznutí 1 karty
+  reshuffleIfNeeded();
+  if(!deck.length){showToast('Balíček je prázdný!');return;}
+  const src=document.getElementById('main-deck');
+  const tgt=document.getElementById('human-hand');
+  runFly(src,tgt,'karty/rub.png',()=>{
+    addLog(players[pi].name,'','lízl 1 kartu');
+    giveCard(pi);renderGame();advanceTurn();
+  });
+}
+
+// ─── BOT AI ───────────────────────────────────────────────────────────
+function getBotAuto(){return document.getElementById('bot-auto-toggle')?.checked??true;}
+function getDevMode(){return document.getElementById('dev-mode-toggle')?.checked??false;}
+function onAutoToggle(){if(getBotAuto()&&!gameEnded&&currentPlayerIndex!==0)setTimeout(maybeRunBot,500);}
+
+function botPreferColor(pi){
+  const cnt={}; COLORS.forEach(c=>cnt[c]=0);
+  // Započítá karty v ruce
+  players[pi].hand.forEach(c=>{if(!c.isSpecial)cnt[c.color]=(cnt[c.color]||0)+1;});
+  // Odezčte body barvám, které vidí u soupeřů na stole
+  players.forEach((p, i) => {
+    if (i !== pi) {
+      p.tableCards.forEach(c => {
+        if (!c.isSpecial && cnt[c.color] !== undefined) cnt[c.color] -= 1.5;
+      });
+    }
+  });
+  return COLORS.reduce((a,b)=>cnt[a]>=cnt[b]?a:b);
+}
+function botPickKarmaValue(pi){ return '7'; }
+function botPickTarget(pi){
+  let best=nextIdx(pi),least=Infinity;
+  players.forEach((p,i)=>{
+    if(i===pi) return;
+    const n = p.hand.length + p.tableCards.length;
+    if(n<least){least=n;best=i;}
+  });
+  return best;
+}
+function botPickSpockTarget(pi){
+  // Swap with player with most cards (bot wants more options)
+  let best=nextIdx(pi),most=-1;
+  players.forEach((p,i)=>{
+    if(i===pi) return;
+    if(p.hand.length>most){most=p.hand.length;best=i;}
+  });
+  return best;
+}
+function botCardScore(c, isTable){
+  let score = 1;
+  if(c.value==='7') score = 12;
+  else if(c.value==='TROJKA') score = 11;
+  else if(c.value==='8'&&c.color==='modrá') score = 10;
+  else if(c.value==='8'&&c.color==='červená') score = 9;
+  else if(c.value==='8'&&c.color==='bílá') score = 8;
+  else if(c.value==='STOP') score = 7;
+  else if(c.value==='A') score = 6;
+  else if(c.value==='8') score = 5;
+  else if(c.value==='KARMA') score = 4;
+  else if(c.value==='Q') score = 3;
+  else if(c.color===activeColor) score = 2;
+  
+  // Bonus +0.5 bodu, pokud je karta na stole (snaží se jí zbavit)
+  if (isTable) score += 0.5;
+  return score;
+}
+
+function botSelectPlay(pi){
+  const p=players[pi];
+  const pool=[];
+  p.hand.forEach((c,i)=>{if(isValidMove(c))pool.push({card:c,idx:i,tbl:false});});
+  p.tableCards.forEach((c,i)=>{if(isValidMove(c))pool.push({card:c,idx:i,tbl:true});});
+  if(!pool.length) return null;
+  if(pendingDraws>0){
+    const s7=pool.find(x=>x.card.value==='7');
+    if(s7) return s7;
+    return pool.find(x=>x.card.value==='KARMA')||null;
+  }
+  // Počítá s tím, zda je karta na stole (tbl)
+  pool.sort((a,b)=>botCardScore(b.card, b.tbl)-botCardScore(a.card, a.tbl));
+  const chosen=pool[0];
+  if(chosen.card.isSpecial&&!chosen.tbl&&p.hand.length===1&&p.tableCards.length===0){
+    const alt=pool.find(x=>!x.card.isSpecial);
+    if(alt) return alt;
+  }
+  return chosen;
+}
+
+function maybeRunBot(){
+  // Natvrdo zapnuto (odstraněn getBotAuto())
+  if(gameEnded||currentPlayerIndex===0||botThinking) return;
+  botThinking=true;
+  const pi=currentPlayerIndex;
+  const el=document.getElementById(`player-area-${pi}`);
+  if(el) el.classList.add('thinking');
+  
+  // Zpomalení na 2000ms až 4000ms (2 - 4 sekundy)
+  const delay = 2000 + Math.random() * 2000;
+  setTimeout(()=>{
+    if(el) el.classList.remove('thinking');
+    botThinking=false;
+    if(gameEnded||currentPlayerIndex!==pi) return;
+    runBotTurn(pi);
+  }, delay);
+}
+
+function runBotTurn(pi){
+  if(gameEnded||currentPlayerIndex!==pi) return;
+  const p=players[pi];
+
+  // Připravíme si elementy pro animace letu
+  const srcBot = document.getElementById(`player-area-${pi}`);
+  const tgtDiscard = document.getElementById('discard-pile');
+  const srcDeck = document.getElementById('main-deck');
+
+  if(cendžr.active){
+    const valid=p.hand.filter(c=>isValidMove(c));
+    if(valid.length){
+      const pick=valid[0];
+      // Bot hraje kartu - animace z bota na odhazovací balíček
+      runFly(srcBot, tgtDiscard, pick.image, () => {
+        playCard(pi,pick,false,p.hand.indexOf(pick));
+      });
+    } else {
+      addLog(p.name,'',`nemá barvu ČENDŽR – líže 2`);
+      drawN(pi,2,()=>{renderGame();advanceTurn();});
+    }
+    return;
+  }
+
+  const sel=botSelectPlay(pi);
+  if(sel){
+    // Bot hraje běžnou kartu - animace na odhazovací balíček
+    runFly(srcBot, tgtDiscard, sel.card.image, () => {
+      playCard(pi,sel.card,sel.tbl,sel.idx);
+    });
+  } else if(pendingDraws>0){
+    const n=pendingDraws;pendingDraws=0;
+    addLog(p.name,'',`přijal trest: líže ${n}`);
+    drawN(pi,n,()=>{renderGame();advanceTurn();});
+  } else {
+    reshuffleIfNeeded();
+    if(deck.length){
+      addLog(p.name,'','lízl 1 kartu');
+      // Bot líže jednu kartu - animace z balíčku k botovi
+      runFly(srcDeck, srcBot, 'karty/rub.png', () => {
+        p.hand.push(deck.pop());
+        renderGame();
+        advanceTurn();
+      });
+    } else {
+      renderGame();
+      advanceTurn();
+    }
+  }
+}
+
+// ─── ANIMATION ────────────────────────────────────────────────────────
+function runFly(src,tgt,imgSrc,cb){
+  if(!src||!tgt){cb();return;}
+  isAnimating=true;
+  const sr=src.getBoundingClientRect(),tr=tgt.getBoundingClientRect();
+  const fly=document.createElement('img');
+  fly.src=imgSrc;
+  fly.style.cssText=`position:fixed;left:${sr.left}px;top:${sr.top}px;width:${sr.width}px;`
+    +`border-radius:8px;z-index:99990;pointer-events:none;box-shadow:3px 3px 12px rgba(0,0,0,.8);`;
+  document.body.appendChild(fly);
+  src.style.opacity='0';
+  const dx=tr.left-sr.left+(tr.width-sr.width)/2;
+  const dy=tr.top-sr.top+(tr.height-sr.height)/2;
+  fly.animate([
+    {transform:'translate(0,0) scale(1)',opacity:1},
+    {transform:`translate(${dx}px,${dy}px) scale(.72)`,opacity:.85,offset:.75},
+    {transform:`translate(${dx}px,${dy}px) scale(.6)`,opacity:.3}
+  ],{duration:440,easing:'ease-in-out',fill:'forwards'}).onfinish=()=>{
+    fly.remove();src.style.opacity='1';isAnimating=false;cb();
+  };
+}
+
+// ─── ARROW ────────────────────────────────────────────────────────────
+let arrowAnim = { sx: 0, sy: 0, ex: 0, ey: 0, initialized: false };
+
+function renderArrow(){
+  const cv=document.getElementById('arrow-canvas');
+  if(!cv) return;
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  
+  if(gameEnded || !players || !players.length) return;
+
+  const pi=currentPlayerIndex;
+  const ni=nextIdx(pi);
+  if(pi===ni) return;
+
+  const curEl=pi===0?document.getElementById('human-area'):document.getElementById(`player-area-${pi}`);
+  const nxtEl=ni===0?document.getElementById('human-area'):document.getElementById(`player-area-${ni}`);
+  if(!curEl||!nxtEl) return;
+
+  const cr=curEl.getBoundingClientRect();
+  const nr=nxtEl.getBoundingClientRect();
+  const targetSx=cr.left+cr.width/2, targetSy=cr.top+cr.height/2;
+  const targetEx=nr.left+nr.width/2, targetEy=nr.top+nr.height/2;
+
+  // LERP: Plynulý dojezd šipky na nové souřadnice
+  if(!arrowAnim.initialized) {
+    arrowAnim.sx = targetSx; arrowAnim.sy = targetSy;
+    arrowAnim.ex = targetEx; arrowAnim.ey = targetEy;
+    arrowAnim.initialized = true;
+  } else {
+    arrowAnim.sx += (targetSx - arrowAnim.sx) * 0.1;
+    arrowAnim.sy += (targetSy - arrowAnim.sy) * 0.1;
+    arrowAnim.ex += (targetEx - arrowAnim.ex) * 0.1;
+    arrowAnim.ey += (targetEy - arrowAnim.ey) * 0.1;
+  }
+
+  const len=Math.hypot(arrowAnim.ex-arrowAnim.sx, arrowAnim.ey-arrowAnim.sy);
+  if(len<20) return;
+  
+  const sh=Math.min(65,len*.3);
+  const ddx=(arrowAnim.ex-arrowAnim.sx)/len, ddy=(arrowAnim.ey-arrowAnim.sy)/len;
+  const ax=arrowAnim.sx+ddx*sh, ay=arrowAnim.sy+ddy*sh;
+  const bx=arrowAnim.ex-ddx*sh, by=arrowAnim.ey-ddy*sh;
+
+  ctx.save();
+  ctx.strokeStyle='rgba(34,224,88,0.85)';
+  ctx.shadowColor='#22e058';ctx.shadowBlur=14;
+  ctx.lineWidth=2.8;ctx.lineCap='round';
+  ctx.setLineDash([9,6]);
+  ctx.lineDashOffset=-(performance.now()/55%18);
+  ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+  ctx.setLineDash([]);
+  
+  const angle=Math.atan2(by-ay,bx-ax);
+  const as=15;
+  ctx.fillStyle='#22e058';ctx.shadowBlur=18;
+  ctx.beginPath();
+  ctx.moveTo(bx,by);
+  ctx.lineTo(bx-as*Math.cos(angle-.42),by-as*Math.sin(angle-.42));
+  ctx.lineTo(bx-as*Math.cos(angle+.42),by-as*Math.sin(angle+.42));
+  ctx.closePath();ctx.fill();
+  ctx.restore();
+}
+(function arrowLoop(){requestAnimationFrame(arrowLoop);if(!gameEnded)renderArrow();})();
+window.addEventListener('resize', () => { arrowAnim.initialized = false; renderArrow(); });
+
+// ─── LAYOUT (clockwise: me→left→top→right) ────────────────────────────
+function calcLayout(n){
+  const bots=n-1;
+  if(bots===0) return{leftIdx:null,topIdxs:[],rightIdx:null};
+  if(bots===1) return{leftIdx:null,topIdxs:[1],rightIdx:null};
+  if(bots===2) return{leftIdx:1,topIdxs:[],rightIdx:2};
+  return{leftIdx:1,topIdxs:Array.from({length:bots-2},(_,i)=>i+2),rightIdx:n-1};
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────
+function renderGame(){
+  renderHeader();renderBots();renderDiscard();renderHuman();
+  document.getElementById('deck-count').textContent=deck.length;
+  updateWarn();
+}
+
+function renderHeader(){
+  const clrHex = c => ({'červená':'#ff4444', 'bílá':'#ffffff', 'modrá':'#4488ff', 'zelená':'#44ff44', 'žlutá':'#ffcc00'})[c] || '#fff';
+  const decColor = c => ({'červená':'červenou', 'bílá':'bílou', 'modrá':'modrou', 'zelená':'zelenou', 'žlutá':'žlutou'})[c] || c;
+  
+  const curPlayer = players[currentPlayerIndex].name;
+  let turnStr = `<span style="color:rgba(240,232,208,.6); font-size:0.9em; margin-right:15px;">Tah: <strong style="color:var(--gold-l); font-size: 1.1em">${curPlayer}</strong></span>`;
+
+  let info='';
+  if(pendingDraws>0) info=`<span class="badge br">⚠️ Zahraj 7 nebo lízeš ${pendingDraws}!</span>`;
+  else if(cendžr.active) info=`🔄 ČENDŽR: Musíš hrát <strong style="color:${clrHex(cendžr.color)}; text-shadow:0 0 5px ${clrHex(cendžr.color)}">${decColor(cendžr.color).toUpperCase()}</strong>`;
+  else info=`Vyžaduje se: <strong style="color:${clrHex(activeColor)}; text-shadow:0 0 5px ${clrHex(activeColor)}">${decColor(activeColor).toUpperCase()}</strong> nebo karta <strong>${activeValue||'?'}</strong>`;
+  
+  document.getElementById('active-info').innerHTML= turnStr + info;
+}
+
+function cardEl(card,hidden,playable,onclick,cls=''){
+  if(!card) return '';
+  const src=hidden?'karty/rub.png':card.image;
+  const c=['card',cls,playable?'playable':''].filter(Boolean).join(' ');
+  const oc=onclick?`onclick="${onclick}"` :'';
+  return `<img src="${src}" class="${c}" ${oc} draggable="false">`;
+}
+function phEl(cls){return `<div class="card-ph ${cls}"></div>`;}
+
+function renderBots(){
+  const devOn=false;
+  const autoOn=false;
+  const{leftIdx,topIdxs,rightIdx}=calcLayout(players.length);
+  const tC=document.getElementById('bots-top');
+  const lC=document.getElementById('bot-left');
+  const rC=document.getElementById('bot-right');
+  tC.innerHTML='';lC.innerHTML='';rC.innerHTML='';
+
+  const mkBot=i=>{
+    const p=players[i];
+    const isTurn=currentPlayerIndex===i;
+    const canCtrl = false;
+    let badges='';
+    if(p.skips>0) badges+=`<span class="badge br">Stojí ${p.skips}x</span> `;
+    if(p.hand.some(c=>c.revealed)&&p.skips===0) badges+=`<span class="badge bg">Odkrytý</span> `;
+
+    // Mapování všech karet na stole (Šmírák jich může mít víc)
+    const tblH=p.tableCards.length > 0 
+      ? p.tableCards.map((c, ci) => {
+          const pl = canCtrl && isValidMove(c);
+          return cardEl(c, false, pl, pl?`handlePlayCard(event,${i},${ci},true)`:'', 'bt-card');
+        }).join('')
+      : phEl('bt-card');
+
+    const handH=p.hand.map((c,ci)=>{
+      const show=devOn||c.revealed;
+      const pl=canCtrl&&isValidMove(c);
+      return cardEl(c,!show,pl,pl?`handlePlayCard(event,${i},${ci},false)`:'','bh-card');
+    }).join('');
+
+    return `<div class="bot-player${isTurn?' active-turn':''}" id="player-area-${i}">
+      <div class="bh"><span class="bn">${p.name}</span>${badges}<span class="bcc">(${p.hand.length})</span></div>
+      <div class="bot-tbl" style="display:flex; justify-content:center; gap:4px; flex-wrap:wrap;">${tblH}</div>
+      <div class="bot-hand-area">${handH}</div>
+    </div>`;
+  };
+
+  topIdxs.forEach(i=>tC.innerHTML+=mkBot(i));
+  if(leftIdx!==null) lC.innerHTML=mkBot(leftIdx);
+  if(rightIdx!==null) rC.innerHTML=mkBot(rightIdx);
+}
+
+function renderDiscard(){
+  const c=document.getElementById('discard-pile');
+  const top=discardPile[discardPile.length-1];
+  const under=discardPile.length>1?discardPile[discardPile.length-2]:null;
+  let h='';
+  
+  // Změna: zobrazení spodní karty u VŠECH fialových (speciálních) karet
+  if(under && top && top.isSpecial) {
+    h+=`<img src="${under.image}" class="d-under" alt="">`;
+  }
+  if(top) {
+    h+=`<img src="${top.image}" class="d-top" alt="${top.value}">`;
+  }
+  
+  c.innerHTML=h;
+}
+
+function renderHuman(){
+  const p=players[0];
+  const mine=currentPlayerIndex===0;
+  const nameEl = document.querySelector('.hn');
+  if(nameEl) {
+    nameEl.textContent = p.name;
+    nameEl.style.color = p.color || p.uiColor; 
+  }
+  let st='';
+  if(p.skips>0) st=`<span class="badge br">Stojíš ${p.skips}x</span>`;
+  else if(!mine) st=`<span class="badge ba">Čekej…</span>`;
+  else if(pendingDraws>0) st=`<span class="badge bo">Zahraj 7 nebo lízeš ${pendingDraws}!</span>`;
+  else if(cendžr.active&&!hasPlayable(0)) st=`<span class="badge bo">Lízeš 2 (ČENDŽR)</span>`;
+  else st=`<span class="badge bg">Tvůj tah!</span>`;
+  document.getElementById('player-status').innerHTML=st;
+
+  // Více karet na stole pro Hráče
+  document.getElementById('human-table').innerHTML=p.tableCards.length > 0
+    ? p.tableCards.map((c, ci) => {
+        const tblPl = mine && isValidMove(c);
+        return cardEl(c, false, tblPl, tblPl?`handlePlayCard(event,0,${ci},true)`:'', 'ht-card');
+      }).join('')
+    : phEl('ht-card');
+  document.getElementById('human-table').style.cssText = "display:flex; justify-content:center; gap:5px; flex-wrap:wrap;";
+
+  document.getElementById('hand-count').textContent=p.hand.length;
+  document.getElementById('human-hand').innerHTML=p.hand.map((card,idx)=>{
+    const pl=mine&&isValidMove(card);
+    return cardEl(card,false,pl,pl?`handlePlayCard(event,0,${idx},false)`:'','hh-card');
+  }).join('');
+
+  // Zvýraznění balíčku, pokud hráč nemůže hrát
+  const deckEl = document.getElementById('main-deck');
+  if (mine && !hasPlayable(0)) {
+      deckEl.classList.add('playable');
+      deckEl.style.boxShadow = "0 0 0 3px var(--gold-l), 0 0 30px rgba(212,168,67,.95), 0 14px 24px rgba(0,0,0,.6)";
+  } else {
+      deckEl.classList.remove('playable');
+      deckEl.style.boxShadow = "2px 3px 10px rgba(0,0,0,.7)";
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// RULES PANEL
+// ════════════════════════════════════════════════════════════════════
+
+  var rTabActive = 'rules';
+  var crSelected = null;
+
+  // ── OPEN / CLOSE ──────────────────────────────────────────────
+  function rOpenRules() {
+    document.getElementById('rules-overlay').classList.remove('hidden');
+    document.getElementById('rules-btn').classList.add('active');
+    // Always reset to rules tab on open, call render directly (most robust)
+    rTabActive = 'rules';
+    _rActivateTab('rules');
+    document.getElementById('rp-body').classList.remove('cr2-mode');
+    try { renderRules(); } catch(e) { console.error('renderRules error:', e); }
+  }
+
+  function rCloseRules() {
+    document.getElementById('rules-overlay').classList.add('hidden');
+    document.getElementById('rules-btn').classList.remove('active');
+  }
+
+  function rSwitchTab(tab) {
+    rTabActive = tab;
+    _rActivateTab(tab);
+    var body = document.getElementById('rp-body');
+    if (tab === 'rules') {
+      body.style.padding = '';
+      body.style.overflow = '';
+      try { renderRules(); } catch(e) { console.error('renderRules error:', e); }
+    } else {
+      try { renderCardRef(); } catch(e) { console.error('renderCardRef error:', e); }
+    }
+  }
+
+  function _rActivateTab(tab) {
+    var tabs = document.querySelectorAll('.rp-tab');
+    if (tabs) tabs.forEach(function(t) { t.classList.remove('rp-active'); });
+    var el = document.getElementById('rtab-' + tab);
+    if (el) el.classList.add('rp-active');
+  }
+
+  // Close on backdrop click
+  document.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('rules-overlay')) rCloseRules();
+  });
+
+  // ── SHARED HELPERS ─────────────────────────────────────────────
+  var R_FILE_CLR = {'červená':'cervena','bílá':'bila','modrá':'modra','zelená':'zelena','žlutá':'zluta'};
+  var R_CLR_HEX  = {'červená':'#c62828','bílá':'#e0e0e0','modrá':'#1565c0','zelená':'#2e7d32','žlutá':'#f9a825','fialová':'#7b1fa2'};
+  var R_CLR_TC   = {'bílá':'color:#222','žlutá':'color:#111'};
+
+  function rCardSrc(color, val) {
+    if (color === 'fialová') return 'karty/' + val.toLowerCase() + '.png';
+    return 'karty/' + (R_FILE_CLR[color] || color) + '_' + val + '.png';
+  }
+  function rTag(label, cls) {
+    return '<span class="rs-tag ' + cls + '">' + label + '</span>';
+  }
+  function rNote(type, icon, html) {
+    return '<div class="rs-note ' + type + '"><span class="rs-note-icon">' + icon + '</span><span>' + html + '</span></div>';
+  }
+  function rRule(num, title, body) {
+    return '<div class="rs-rule"><div class="rs-num">' + num + '</div><div class="rs-body"><h3>' + title + '</h3>' + body + '</div></div>';
+  }
+  function rBoostItem(fileColor, name, shortDesc) {
+    return '<div class="rs-boost-item">'
+      + '<img src="karty/' + fileColor + '_8.png" alt="' + name + '">'
+      + '<div class="rs-boost-name">' + name + '</div>'
+      + '<div class="rs-boost-desc">' + shortDesc + '</div>'
+      + '</div>';
+  }
+
+  // ── RULES TAB ──────────────────────────────────────────────────
+  function renderRules() {
+    var html = '<div class="rs-page">';
+    html += '<div class="rs-intro">'
+      + '<div class="rs-intro-block"><div class="si-label">Počet hráčů</div><div class="si-val">2 – 7</div></div>'
+      + '<div class="rs-intro-block"><div class="si-label">Balíček</div><div class="si-val">45 karet</div></div>'
+      + '<div class="rs-intro-block"><div class="si-label">Cíl hry</div><div class="si-val">Zbavit se všech karet</div></div>'
+      + '<div class="rs-intro-block"><div class="si-label">Délka hry</div><div class="si-val">15 – 45 minut</div></div>'
+      + '</div>';
+    html += rRule(1, 'Složení balíčku',
+      '<p><strong>40 základních karet</strong> — 5 barev, každá s hodnotami 7, 8, 9, 10, J, Q, K, A:</p>'
+      + '<p style="margin:6px 0">'
+      + rTag('Červená','red') + ' ' + rTag('Bílá','white') + ' ' + rTag('Modrá','blue') + ' ' + rTag('Zelená','green') + ' ' + rTag('Žlutá','yellow')
+      + '</p>'
+      + '<p style="margin-top:8px"><strong>5 speciálních karet</strong> — '
+      + rTag('Fialová','purple') + ' KARMA ×2 &nbsp;·&nbsp; TROJKA &nbsp;·&nbsp; SPOCK &nbsp;·&nbsp; STOP</p>'
+    );
+    html += '<hr class="rs-divider">';
+    html += rRule(2, 'Cíl hry',
+      '<p>Jako první se zbavit <strong>všech karet v ruce</strong> i <strong>lícové karty na stole</strong>.</p>'
+      + rNote('warn','⚠','<strong>Speciálem nelze vyhrát.</strong> Zbyde-li ti jako poslední speciální karta, zahraješ ji, ale ihned lízneš 1 kartu a hraješ dál.')
+    );
+    html += '<hr class="rs-divider">';
+    html += rRule(3, 'Příprava hry',
+      '<ul>'
+      + '<li>Zamíchej celý balíček.</li>'
+      + '<li>Každý hráč dostane <strong>4 karty</strong>: jednu lícem nahoru jako <em>lícovou kartu na stole</em> + tři do ruky.</li>'
+      + '<li>Zbývající karty tvoří <strong>dobírací balíček</strong>.</li>'
+      + '<li>Odhalí se první karta bez 7, 8, A a Speciálu — ta zahájí odhazovací balíček.</li>'
+      + '<li>Pořadí hry: <strong>po směru hodinových ručiček ↻</strong>.</li>'
+      + '</ul>'
+      + rNote('tip','💡','Lícová karta je normální karta viditelná na stole. Lze ji zahrát pouze ve vlastním tahu. Po zahrání zmizí ze hry.')
+    );
+    html += '<hr class="rs-divider">';
+    html += rRule(4, 'Průběh tahu',
+      '<p>V každém tahu zahraj <strong>právě jednu</strong> platnou kartu nebo lízni z balíčku:</p>'
+      + '<ul>'
+      + '<li><strong>Platná karta:</strong> shoduje se barvou nebo hodnotou s vrchní kartou odhazovacího balíčku.</li>'
+      + '<li><strong>Speciální karta:</strong> lze zahrát na jakoukoli barvu (vyjma aktivního řetězu 7 nebo efektu ČENDŽR).</li>'
+      + '<li><strong>Nemáš co hrát:</strong> klikni na dobírací balíček — lízneš 1 kartu a tah končí.</li>'
+      + '</ul>'
+      + rNote('tip','♻','Když dojde dobírací balíček, odhazovací balíček (bez vrchní karty) se zamíchá zpátky.')
+    );
+    html += '<hr class="rs-divider">';
+    html += rRule(5, 'Řetěz sedmiček',
+      '<p>Zahraješ-li <strong>sedmičku</strong>, další hráč musí buď zahrát také sedmičku (nebo KARMU jako 7) a trest pošle dál, nebo přijmout všechny nahromaděné karty.</p>'
+      + '<p>Trest se sčítá — každá další sedmička přidá +2.</p>'
+      + '<div class="rs-chain">'
+      + '<div class="rs-chain-card"><img src="karty/cervena_7.png" alt="7"><div class="rs-chain-badge">+2</div></div>'
+      + '<span class="rs-chain-arrow">→</span>'
+      + '<div class="rs-chain-card"><img src="karty/zelena_7.png" alt="7"><div class="rs-chain-badge">+2</div></div>'
+      + '<span class="rs-chain-arrow">→</span>'
+      + '<div class="rs-chain-card"><img src="karty/modra_7.png" alt="7"><div class="rs-chain-badge">+2</div></div>'
+      + '<span class="rs-chain-arrow">→</span>'
+      + '<div class="rs-chain-result"><div class="rs-chain-eq">=</div><div class="rs-chain-sum">6</div><div class="rs-chain-label">karet</div></div>'
+      + '</div>'
+      + rNote('warn','⛔','Při aktivním řetězu sedmiček nelze zahrát žádnou jinou kartu — pouze 7 nebo KARMU jako 7.')
+    );
+    html += '<hr class="rs-divider">';
+    html += rRule(6, 'Osmičky — BOOST efekty',
+      '<p>Každá osmička je <strong>BOOST</strong> — povinný efekt závisí na barvě. Klikni na kartu v záložce <em>Přehled karet</em> pro detail.</p>'
+      + '<div class="rs-boost-grid">'
+      + rBoostItem('zelena','ŠMÍRÁK','Odhal ruku cíle')
+      + rBoostItem('cervena','GRANÁT','Všichni líznou 1')
+      + rBoostItem('bila','ŠATLAVA','Cíl stojí + líže 2')
+      + rBoostItem('modra','SNAJPR','Vyber cíl, líže 2')
+      + rBoostItem('zluta','ČENDŽR','Povinná barva dokola')
+      + '</div>'
+    );
+    html += '<hr class="rs-divider">';
+    html += rRule(7, 'Dáma — změna barvy',
+      '<p>Dámu lze zahrát <strong>na jakoukoli barvu</strong>. Po zahrání si zvol novou barvu — ta platí pro dalšího hráče.</p>'
+    );
+    html += '<hr class="rs-divider">';
+    html += rRule(8, 'KARMA — obrana i joker',
+      '<p>Speciální fialová karta. Lze zahrát na jakoukoli barvu — při hraní řekni, co napodobuje (např. <em>„červenou sedmu"</em>).</p>'
+      + '<p>Může napodobit <strong>jakoukoli základní kartu kromě osmičky</strong> (BOOST). Efekt napodobené karty se spustí normálně.</p>'
+      + '<p>Při útocích ŠMÍRÁK, GRANÁT, SNAJPR a ŠATLAVA ti hra nabídne KARMU jako <strong>obranný štít</strong> — efekt se odrazí zpět na útočníka.</p>'
+      + rNote('ok','🛡','Obrana funguje u: ŠMÍRÁK · GRANÁT · SNAJPR · ŠATLAVA — NEFUNGUJE u: TROJKA · SPOCK · STOP')
+      + rNote('warn','⚠','Speciálem (včetně KARMY) nelze vyhrát.')
+    );
+    html += '</div>';
+    document.getElementById('rp-body').innerHTML = html;
+  }
+
+// ── CARD REFERENCE TAB ─────────────────────────────────────────
+var CardDB = {
+  COLORS: ['červená','bílá','modrá','zelená','žlutá','fialová'],
+  VALS: {
+    'červená':['7','8','9','10','J','Q','K','A'],
+    'bílá':   ['7','8','9','10','J','Q','K','A'],
+    'modrá':  ['7','8','9','10','J','Q','K','A'],
+    'zelená': ['7','8','9','10','J','Q','K','A'],
+    'žlutá':  ['7','8','9','10','J','Q','K','A'],
+    'fialová':['KARMA','TROJKA','SPOCK','STOP']
+  },
+  LABEL: {'červená':'Červená','bílá':'Bílá','modrá':'Modrá','zelená':'Zelená','žlutá':'Žlutá','fialová':'Speciální'},
+  TAG: {'červená':'red','bílá':'white','modrá':'blue','zelená':'green','žlutá':'yellow','fialová':'purple'},
+  BOOST: {'zelená':'ŠMÍRÁK','červená':'GRANÁT','bílá':'ŠATLAVA','modrá':'SNAJPR','žlutá':'ČENDŽR'},
+  INFO: {
+    '7': { name:'7', effect:'Útok +2 karty' },
+    '8': { name:'8', effect:'BOOST efekt' },
+    '9': { name:'9', effect:'Bez efektu' },
+    '10': { name:'10', effect:'Otočení směru' },
+    'J': { name:'J', effect:'Bez efektu' },
+    'Q': { name:'Q', effect:'Změna barvy' },
+    'K': { name:'K', effect:'Bez efektu' },
+    'A': { name:'A', effect:'Přeskoč hráče' },
+    'ŠMÍRÁK': { name:'ŠMÍRÁK', effect:'Zelená 8 — BOOST' },
+    'GRANÁT': { name:'GRANÁT', effect:'Červená 8 — BOOST' },
+    'ŠATLAVA': { name:'ŠATLAVA', effect:'Bílá 8 — BOOST' },
+    'SNAJPR': { name:'SNAJPR', effect:'Modrá 8 — BOOST' },
+    'ČENDŽR': { name:'ČENDŽR', effect:'Žlutá 8 — BOOST' },
+    'KARMA': { name:'KARMA', effect:'Speciální — Joker / Štít' },
+    'TROJKA': { name:'TROJKA', effect:'Speciální — Lízeš 3' },
+    'SPOCK': { name:'SPOCK', effect:'Speciální — Výměna ruky' },
+    'STOP': { name:'STOP', effect:'Speciální — Stopka 2 kola' }
+  }
+};
+
+function crDesc(color, val) {
+  var key = (val === '8' && CardDB.BOOST[color]) ? CardDB.BOOST[color] : val;
+  var n = rNote; 
+  var descs = {
+    '7': '<p><strong>Dalšímu hráči přibydou 2 karty.</strong> Musí si líznout a ztratí tah — pokud nezahraje také 7 a trest nepošle dál.</p><p>Trest se sčítá: každá další sedmička přidá +2.</p>' + n('ok','🔗','Lze řetězit i pomocí KARMY hrané jako 7.') + n('warn','⛔','Při aktivním řetězu 7 nelze hrát nic jiného.'),
+    '8': '<p>Každá osmička má povinný BOOST efekt podle barvy. Vyber konkrétní barvu a osmičku pro detail efektu.</p>',
+    '9': '<p>Normální karta bez speciálního efektu. Hraje se na souhlasnou barvu nebo hodnotu.</p>',
+    '10': '<p><strong>Změní směr hry:</strong> ↻ → ↺ nebo naopak. Šipka ve hře vždy ukazuje na dalšího hráče v aktuálním směru.</p>',
+    'J': '<p>Normální karta bez speciálního efektu. Hraje se na souhlasnou barvu nebo hodnotu.</p>',
+    'Q': '<p>Lze zahrát <strong>na jakoukoli barvu.</strong> Po zahrání si zvol novou barvu — ta platí pro dalšího hráče.</p>',
+    'K': '<p>Normální karta bez speciálního efektu. Hraje se na souhlasnou barvu nebo hodnotu.</p>',
+    'A': '<p><strong>Další hráč přeskočí jeden tah.</strong></p><p>Esa lze řetězit — zasažený může zahrát vlastní Eso a trest předat dál; sám pak nestojí.</p>' + n('warn','⛔','Eso nezachraňuje od efektu ŠATLAVY.'),
+    'ŠMÍRÁK': '<p>Cílový hráč (bezprostředně další) musí <strong>vyložit všechny karty z ruky lícem nahoru</strong> — ostatní hráči je vidí. Nové karty bere zpět skrytě.</p>' + n('ok','🛡','Obrana KARMOU: efekt se odrazí zpět na útočníka.'),
+    'GRANÁT': '<p><strong>Všichni hráči kromě útočníka</strong> si líznou 1 kartu.</p>' + n('ok','🛡','Obrana KARMOU: útočník lízne tolik karet, kolik je hráčů u stolu.'),
+    'ŠATLAVA': '<p>Cílový hráč (bezprostředně další) <strong>stojí 1 kolo a lízne 2 karty.</strong></p>' + n('warn','⛔','Eso nezachraňuje od ŠATLAVY.') + n('ok','🛡','Obrana KARMOU: efekt se odrazí zpět na útočníka.'),
+    'SNAJPR': '<p>Vyber <strong>libovolného hráče.</strong> Vybraný si lízne 2 karty. Hra pokračuje dalším hráčem za zasaženým.</p>' + n('ok','🛡','Obrana KARMOU: trest se přenese na útočníka.'),
+    'ČENDŽR': '<p>Zvol barvu. <strong>Všichni hráči musí hrát tuto barvu,</strong> dokud se tah nevrátí zpět k tobě.</p>' + n('warn','⚠','Nemáš požadovanou barvu? Musíš líznout 2 karty a tah přejde dál.'),
+    'KARMA': '<p>Lze zahrát na jakoukoli barvu. Při hraní řekni, co napodobuje (např. <em>„červenou 7"</em>).</p><p>Může napodobit <strong>jakoukoli základní kartu kromě 8</strong>. Efekt napodobené karty se spustí normálně.</p><p>Ve hře jsou <strong>2 kusy KARMY.</strong> Při aktivním řetězu 7 slouží pouze jako 7.</p>' + n('ok','🛡','Obrana: u ŠMÍRÁKA, GRANÁTU, SNAJPRA a ŠATLAVY odrazí útok zpět.') + n('warn','⚠','Speciálem nelze vyhrát.'),
+    'TROJKA': '<p>Cílový hráč (bezprostředně další) si musí líznout <strong>3 karty.</strong></p>' + n('warn','⛔','Neobrátitelné — KARMA ani jiná obrana nepomáhá.'),
+    'SPOCK': '<p>Vyber libovolného hráče. <strong>Vyměníte si všechny karty v ruce.</strong> Lícové karty na stole zůstávají beze změny.</p>' + n('warn','⛔','Neobrátitelné — KARMA nepomáhá.'),
+    'STOP': '<p>Cílový hráč (bezprostředně další) <strong>stojí 2 celá kola</strong> (přeskočí 2 tahy).</p>' + n('warn','⛔','Neobrátitelné — KARMA ani Eso nepomáhají.')
+  };
+  return descs[key] || '<p>Bez speciálního efektu.</p>';
+}
+
+function crLookup(color, val) {
+  var key = (val === '8' && CardDB.BOOST[color]) ? CardDB.BOOST[color] : val;
+  return CardDB.INFO[key] || { name: val, effect: '' };
+}
+
+function renderCardRef() {
+  var body = document.getElementById('rp-body');
+
+  if (typeof CardDB === 'undefined') {
+    console.error('Kritická chyba: CardDB chybí.');
+    body.innerHTML = '<div style="color:red; padding: 20px;">Chyba: Databáze karet chybí.</div>';
+    return;
+  }
+
+  var sbHtml = '';
+  CardDB.COLORS.forEach(function(color) {
+    var label = CardDB.LABEL[color] || color.toUpperCase();
+    sbHtml += '<div class="cr2-section-header">' + label + '</div>';
+    
+    var cardsArray = CardDB.VALS[color];
+    if (!cardsArray || !Array.isArray(cardsArray)) return;
+
+    cardsArray.forEach(function(val) {
+      var info = crLookup(color, val);
+      var src = rCardSrc(color, val);
+      var active = crSelected && crSelected.c === color && crSelected.v === val ? ' active' : '';
+      
+      sbHtml += '<button class="cr2-item' + active + '" data-c="' + color + '" data-v="' + val + '">'
+        + '<img src="' + src + '" alt="' + val + '" loading="lazy">'
+        + '<div><div class="cr2-item-name">' + info.name + '</div>'
+        + '<div class="cr2-item-sub">' + info.effect + '</div></div>'
+        + '</button>';
+    });
+  });
+
+  var pvHtml = crSelected
+    ? crPreviewHtml(crSelected.c, crSelected.v)
+    : '<div class="cr2-empty"><div class="cr2-empty-icon">🃏</div><div class="cr2-empty-text">Vyber kartu vlevo</div></div>';
+
+  body.style.padding = '0';
+  body.style.overflow = 'hidden';
+
+  body.innerHTML = '<div class="cr2-layout">'
+    + '<div class="cr2-sidebar" id="cr2sb">' + sbHtml + '</div>'
+    + '<div class="cr2-preview" id="cr2pv">' + pvHtml + '</div>'
+    + '</div>';
+
+  var sb = document.getElementById('cr2sb');
+  if (sb) {
+    sb.addEventListener('click', function(e) {
+      var btn = e.target.closest('button[data-c]');
+      if (!btn) return;
+      var c = btn.getAttribute('data-c');
+      var v = btn.getAttribute('data-v');
+      if (!c || !v) return;
+      crSelected = { c: c, v: v };
+      sb.querySelectorAll('.cr2-item').forEach(function(el) { el.classList.remove('active'); });
+      btn.classList.add('active');
+      var pv = document.getElementById('cr2pv');
+      if (pv) { pv.innerHTML = crPreviewHtml(c, v); pv.scrollTop = 0; }
+    });
+  }
+}
+
+function crPreviewHtml(color, val) {
+  var info = crLookup(color, val);
+  var src = rCardSrc(color, val);
+  var tagCls = CardDB.TAG[color] || 'gold';
+  var label = (CardDB.LABEL[color] || color).toUpperCase();
+  return '<div class="cr2-card-hero">'
+    + '<img src="' + src + '" alt="' + val + '">'
+    + '<div class="cr2-hero-info">'
+    + '<div class="cr2-hero-title">' + info.name + '</div>'
+    + '<div class="cr2-hero-tags">'
+    + '<span class="rs-tag ' + tagCls + '">' + label + '</span>'
+    + (info.effect ? ' <span class="rs-tag gold">' + info.effect + '</span>' : '')
+    + '</div>'
+    + '<div class="cr2-hero-desc">' + crDesc(color, val) + '</div>'
+    + '</div></div>';
+}
+
+  window.rPickColor = function() {};
+  window.rPickValue = function() {};
+  window.rSelectCard = function() {};
+
+
+</script>
+</body>
+</html>
