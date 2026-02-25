@@ -693,7 +693,7 @@ body:has(#start-screen:not(.hidden)) #rules-btn {
 // ─── CONSTANTS ───────────────────────────────────────────────────────
 const COLORS=['červená','bílá','modrá','zelená','žlutá'];
 const BASIC_VALS=['7','8','9','10','J','Q','K','A'];
-const SPECIALS=['KARMA','KARMA','TROJKA','SPOCK','STOP'];
+const SPECIALS=['ZMRD','ZMRD','TROJKA','SPOCK','STOP'];
 const FILE_CLR={červená:'cervena',bílá:'bila',modrá:'modra',zelená:'zelena',žlutá:'zluta'};
 const BOOST_MAP={zelená:'ŠMÍRÁK',červená:'GRANÁT',bílá:'ŠATLAVA',modrá:'SNAJPR',žlutá:'ČENDŽR'};
 const CLR_CSS={červená:'#c62828',bílá:'#ccc',modrá:'#1565c0',zelená:'#2e7d32',žlutá:'#f9a825',fialová:'#7b1fa2'};
@@ -819,7 +819,7 @@ function cardLabel(card){
 
 function isValidMove(card){
   if(!card||gameEnded) return false;
-  if(pendingDraws>0) return card.value==='7'||card.value==='KARMA';
+  if(pendingDraws>0) return card.value==='7'||card.value==='ZMRD';
   
   // OPRAVA ČENDŽRA: Musí se hrát striktně jen požadovaná barva. Žádné speciály.
   if(cendžr.active){
@@ -993,22 +993,22 @@ function showToast(msg,dur=2800){
   clearTimeout(_tt);_tt=setTimeout(()=>el.classList.add('hidden'),dur);
 }
 
-// ─── KARMA DEFENSE ───────────────────────────────────────────────────
+// ─── ZMRD DEFENSE ───────────────────────────────────────────────────
 function tryDefend(defIdx,atkIdx,onYes,onNo){
   const def=players[defIdx];
-  const ki=def.hand.findIndex(c=>c.value==='KARMA');
+  const ki=def.hand.findIndex(c=>c.value==='ZMRD');
   if(ki===-1){onNo();return;}
 
   if(defIdx===0){
     pendingModalCB=choice=>{
       if(choice==='yes'){
         discardPile.push(def.hand.splice(ki,1)[0]);
-        addLog(def.name,'KARMA','odrazil útok zpět!');
+        addLog(def.name,'ZMRD','odrazil útok zpět!');
         renderGame();onYes();
       } else onNo();
     };
     showModal('🛡️ OBRANA!',`
-      <p style="margin-bottom:14px">Na tebe míří útok!<br>Chceš obětovat KARMU a odrazit ho zpět?</p>
+      <p style="margin-bottom:14px">Na tebe míří útok!<br>Chceš obětovat ZMRDA a odrazit ho zpět?</p>
       <div style="display:flex;gap:10px;justify-content:center">
         <button class="mb c-act" onclick="submitMC('yes')">🛡️ Odrazit!</button>
         <button class="mb c-gry" onclick="submitMC('no')">❌ Přijmout</button>
@@ -1017,8 +1017,8 @@ function tryDefend(defIdx,atkIdx,onYes,onNo){
   } else {
     if(def.hand.length>=3){
       discardPile.push(def.hand.splice(ki,1)[0]);
-      addLog(def.name,'KARMA','odrazil útok!');
-      showToast(`${def.name} odrazil útok KARMOU! 🛡️`);
+      addLog(def.name,'ZMRD','odrazil útok!');
+      showToast(`${def.name} odrazil útok ZMRDEM! 🛡️`);
       renderGame();setTimeout(onYes,380);
     } else onNo();
   }
@@ -1027,8 +1027,8 @@ function tryDefend(defIdx,atkIdx,onYes,onNo){
 // ─── CARD EFFECTS ────────────────────────────────────────────────────
 function processEffect(pi, card, choices, done) {
   const p = players[pi];
-  const eff = card.value === 'KARMA' ? choices.value : card.value;
-  const effClr = card.value === 'KARMA' ? choices.color : card.color;
+  const eff = card.value === 'ZMRD' ? choices.value : card.value;
+  const effClr = card.value === 'ZMRD' ? choices.color : card.color;
   
   // Zjištění cíle (kdo je na řadě po mně, nebo koho jsem si vybral)
   let tgt = nextIdx(pi);
@@ -1037,7 +1037,7 @@ function processEffect(pi, card, choices, done) {
   }
 
   // Uložení stavu barvy/hodnoty pro další tah
-  if (card.isSpecial && card.value !== 'KARMA') {
+  if (card.isSpecial && card.value !== 'ZMRD') {
     // TROJKA, SPOCK, STOP nemění barvu
   } else if (eff === 'Q') {
     activeColor = choices.color || effClr; activeValue = 'Q';
@@ -1046,7 +1046,7 @@ function processEffect(pi, card, choices, done) {
   }
 
   // PŘÍPRAVA LOGU: Jméno karty
-  const cardName = card.value === 'KARMA' ? `KARMA (jako ${effClr} ${eff})` : `${card.color} ${card.value}`;
+  const cardName = card.value === 'ZMRD' ? `ZMRD (jako ${effClr} ${eff})` : `${card.color} ${card.value}`;
   let logText = '';
 
   // VYHODNOCENÍ EFEKTŮ A LOGOVÁNÍ
@@ -1175,20 +1175,20 @@ function playCard(pi,card,isFromTable,cardIdx){
 
   // ── Human modals ──
   if(pi===0){
-    if(card.value==='KARMA'){
+    if(card.value==='ZMRD'){
       if(pendingDraws>0){
         pendingModalCB=clr=>{
-          addLog('Ty','KARMA',`jako ${clr} 7`);
+          addLog('Ty','ZMRD',`jako ${clr} 7`);
           processEffect(pi,card,{color:clr,value:'7',target:null},done);
         };
-        let h=`<p style="margin-bottom:10px;color:#ffa">Probíhá řetěz 7! KARMA jako 7 – vyber barvu:</p><div class="mc">`;
+        let h=`<p style="margin-bottom:10px;color:#ffa">Probíhá řetěz 7! ZMRD jako 7 – vyber barvu:</p><div class="mc">`;
         COLORS.forEach(c=>h+=`<button class="mb ${cBtn(c)}" onclick="submitMC('${c}')">${c.toUpperCase()}</button>`);
         h+=`</div>`;
-        showModal('🎴 KARMA jako 7',h);return;
+        showModal('🎴 ZMRD jako 7',h);return;
       }
       window._kCol=null;window._kVal=null;
       pendingModalCB=res=>{
-        addLog('Ty','KARMA',`jako ${res.color} ${res.value}`);
+        addLog('Ty','ZMRD',`jako ${res.color} ${res.value}`);
         processEffect(pi,card,{color:res.color,value:res.value,target:null},done);
       };
       const vals=BASIC_VALS.filter(v=>v!=='8');
@@ -1197,7 +1197,7 @@ function playCard(pi,card,isFromTable,cardIdx){
       h+=`</div><p style="margin:10px 0 8px">Vyber hodnotu (ne 8):</p><div class="mc">`;
       vals.forEach(v=>h+=`<button class="mb kvb c-gry" onclick="kPickValue('${v}',this)">${v}</button>`);
       h+=`</div><button class="mb c-act" style="width:100%;margin-top:12px" onclick="submitKarma()">✅ POTVRDIT</button>`;
-      showModal('🎴 KARMA – Co hraješ?',h);return;
+      showModal('🎴 ZMRD – Co hraješ?',h);return;
     }
 
     if(card.value==='Q'||(card.value==='8'&&card.color==='žlutá')){
@@ -1249,10 +1249,10 @@ function playCard(pi,card,isFromTable,cardIdx){
   // ── Bot: auto-resolve ──
   const clr=botPreferColor(pi);
   let choices={color:clr,value:card.value,target:null};
-  if(card.value==='KARMA'){
+  if(card.value==='ZMRD'){
     const mv=pendingDraws>0?'7':botPickKarmaValue(pi);
     choices={color:clr,value:mv,target:null};
-    addLog(players[pi].name,'KARMA',`jako ${clr} ${mv}`);
+    addLog(players[pi].name,'ZMRD',`jako ${clr} ${mv}`);
   } else if(card.value==='SPOCK'){
     choices.target=botPickSpockTarget(pi);
     addLog(players[pi].name,'SPOCK',`s ${players[choices.target].name}`);
@@ -1362,7 +1362,7 @@ function botCardScore(c, isTable){
   else if(c.value==='STOP') score = 7;
   else if(c.value==='A') score = 6;
   else if(c.value==='8') score = 5;
-  else if(c.value==='KARMA') score = 4;
+  else if(c.value==='ZMRD') score = 4;
   else if(c.value==='Q') score = 3;
   else if(c.color===activeColor) score = 2;
   
@@ -1380,7 +1380,7 @@ function botSelectPlay(pi){
   if(pendingDraws>0){
     const s7=pool.find(x=>x.card.value==='7');
     if(s7) return s7;
-    return pool.find(x=>x.card.value==='KARMA')||null;
+    return pool.find(x=>x.card.value==='ZMRD')||null;
   }
   // Počítá s tím, zda je karta na stole (tbl)
   pool.sort((a,b)=>botCardScore(b.card, b.tbl)-botCardScore(a.card, a.tbl));
@@ -1781,7 +1781,7 @@ function renderHuman(){
       + rTag('Červená','red') + ' ' + rTag('Bílá','white') + ' ' + rTag('Modrá','blue') + ' ' + rTag('Zelená','green') + ' ' + rTag('Žlutá','yellow')
       + '</p>'
       + '<p style="margin-top:8px"><strong>5 speciálních karet</strong> — '
-      + rTag('Fialová','purple') + ' KARMA ×2 &nbsp;·&nbsp; TROJKA &nbsp;·&nbsp; SPOCK &nbsp;·&nbsp; STOP</p>'
+      + rTag('Fialová','purple') + ' ZMRD ×2 &nbsp;·&nbsp; TROJKA &nbsp;·&nbsp; SPOCK &nbsp;·&nbsp; STOP</p>'
     );
     html += '<hr class="rs-divider">';
     html += rRule(2, 'Cíl hry',
@@ -1811,7 +1811,7 @@ function renderHuman(){
     );
     html += '<hr class="rs-divider">';
     html += rRule(5, 'Řetěz sedmiček',
-      '<p>Zahraješ-li <strong>sedmičku</strong>, další hráč musí buď zahrát také sedmičku (nebo KARMU jako 7) a trest pošle dál, nebo přijmout všechny nahromaděné karty.</p>'
+      '<p>Zahraješ-li <strong>sedmičku</strong>, další hráč musí buď zahrát také sedmičku (nebo ZMRDA jako 7) a trest pošle dál, nebo přijmout všechny nahromaděné karty.</p>'
       + '<p>Trest se sčítá — každá další sedmička přidá +2.</p>'
       + '<div class="rs-chain">'
       + '<div class="rs-chain-card"><img src="karty/cervena_7.png" alt="7"><div class="rs-chain-badge">+2</div></div>'
@@ -1822,7 +1822,7 @@ function renderHuman(){
       + '<span class="rs-chain-arrow">→</span>'
       + '<div class="rs-chain-result"><div class="rs-chain-eq">=</div><div class="rs-chain-sum">6</div><div class="rs-chain-label">karet</div></div>'
       + '</div>'
-      + rNote('warn','⛔','Při aktivním řetězu sedmiček nelze zahrát žádnou jinou kartu — pouze 7 nebo KARMU jako 7.')
+      + rNote('warn','⛔','Při aktivním řetězu sedmiček nelze zahrát žádnou jinou kartu — pouze 7 nebo ZMRDA jako 7.')
     );
     html += '<hr class="rs-divider">';
     html += rRule(6, 'Osmičky — BOOST efekty',
@@ -1840,12 +1840,12 @@ function renderHuman(){
       '<p>Dámu lze zahrát <strong>na jakoukoli barvu</strong>. Po zahrání si zvol novou barvu — ta platí pro dalšího hráče.</p>'
     );
     html += '<hr class="rs-divider">';
-    html += rRule(8, 'KARMA — obrana i joker',
+    html += rRule(8, 'ZMRD — obrana i joker',
       '<p>Speciální fialová karta. Lze zahrát na jakoukoli barvu — při hraní řekni, co napodobuje (např. <em>„červenou sedmu"</em>).</p>'
       + '<p>Může napodobit <strong>jakoukoli základní kartu kromě osmičky</strong> (BOOST). Efekt napodobené karty se spustí normálně.</p>'
-      + '<p>Při útocích ŠMÍRÁK, GRANÁT, SNAJPR a ŠATLAVA ti hra nabídne KARMU jako <strong>obranný štít</strong> — efekt se odrazí zpět na útočníka.</p>'
+      + '<p>Při útocích ŠMÍRÁK, GRANÁT, SNAJPR a ŠATLAVA ti hra nabídne ZMRDA jako <strong>obranný štít</strong> — efekt se odrazí zpět na útočníka.</p>'
       + rNote('ok','🛡','Obrana funguje u: ŠMÍRÁK · GRANÁT · SNAJPR · ŠATLAVA — NEFUNGUJE u: TROJKA · SPOCK · STOP')
-      + rNote('warn','⚠','Speciálem (včetně KARMY) nelze vyhrát.')
+      + rNote('warn','⚠','Speciálem (včetně ZMRDA) nelze vyhrát.')
     );
     html += '</div>';
     document.getElementById('rp-body').innerHTML = html;
@@ -1860,7 +1860,7 @@ var CardDB = {
     'modrá':  ['7','8','9','10','J','Q','K','A'],
     'zelená': ['7','8','9','10','J','Q','K','A'],
     'žlutá':  ['7','8','9','10','J','Q','K','A'],
-    'fialová':['KARMA','TROJKA','SPOCK','STOP']
+    'fialová':['ZMRD','TROJKA','SPOCK','STOP']
   },
   LABEL: {'červená':'Červená','bílá':'Bílá','modrá':'Modrá','zelená':'Zelená','žlutá':'Žlutá','fialová':'Speciální'},
   TAG: {'červená':'red','bílá':'white','modrá':'blue','zelená':'green','žlutá':'yellow','fialová':'purple'},
@@ -1879,7 +1879,7 @@ var CardDB = {
     'ŠATLAVA': { name:'ŠATLAVA', effect:'Bílá 8 — BOOST' },
     'SNAJPR': { name:'SNAJPR', effect:'Modrá 8 — BOOST' },
     'ČENDŽR': { name:'ČENDŽR', effect:'Žlutá 8 — BOOST' },
-    'KARMA': { name:'KARMA', effect:'Speciální — Joker / Štít' },
+    'ZMRD': { name:'ZMRD', effect:'Speciální — Joker / Štít' },
     'TROJKA': { name:'TROJKA', effect:'Speciální — Lízeš 3' },
     'SPOCK': { name:'SPOCK', effect:'Speciální — Výměna ruky' },
     'STOP': { name:'STOP', effect:'Speciální — Stopka 2 kola' }
@@ -1890,7 +1890,7 @@ function crDesc(color, val) {
   var key = (val === '8' && CardDB.BOOST[color]) ? CardDB.BOOST[color] : val;
   var n = rNote; 
   var descs = {
-    '7': '<p><strong>Dalšímu hráči přibydou 2 karty.</strong> Musí si líznout a ztratí tah — pokud nezahraje také 7 a trest nepošle dál.</p><p>Trest se sčítá: každá další sedmička přidá +2.</p>' + n('ok','🔗','Lze řetězit i pomocí KARMY hrané jako 7.') + n('warn','⛔','Při aktivním řetězu 7 nelze hrát nic jiného.'),
+    '7': '<p><strong>Dalšímu hráči přibydou 2 karty.</strong> Musí si líznout a ztratí tah — pokud nezahraje také 7 a trest nepošle dál.</p><p>Trest se sčítá: každá další sedmička přidá +2.</p>' + n('ok','🔗','Lze řetězit i pomocí ZMRDA hraného jako 7.') + n('warn','⛔','Při aktivním řetězu 7 nelze hrát nic jiného.'),
     '8': '<p>Každá osmička má povinný BOOST efekt podle barvy. Vyber konkrétní barvu a osmičku pro detail efektu.</p>',
     '9': '<p>Normální karta bez speciálního efektu. Hraje se na souhlasnou barvu nebo hodnotu.</p>',
     '10': '<p><strong>Změní směr hry:</strong> ↻ → ↺ nebo naopak. Šipka ve hře vždy ukazuje na dalšího hráče v aktuálním směru.</p>',
@@ -1898,15 +1898,15 @@ function crDesc(color, val) {
     'Q': '<p>Lze zahrát <strong>na jakoukoli barvu.</strong> Po zahrání si zvol novou barvu — ta platí pro dalšího hráče.</p>',
     'K': '<p>Normální karta bez speciálního efektu. Hraje se na souhlasnou barvu nebo hodnotu.</p>',
     'A': '<p><strong>Další hráč přeskočí jeden tah.</strong></p><p>Esa lze řetězit — zasažený může zahrát vlastní Eso a trest předat dál; sám pak nestojí.</p>' + n('warn','⛔','Eso nezachraňuje od efektu ŠATLAVY.'),
-    'ŠMÍRÁK': '<p>Cílový hráč (bezprostředně další) musí <strong>vyložit všechny karty z ruky lícem nahoru</strong> — ostatní hráči je vidí. Nové karty bere zpět skrytě.</p>' + n('ok','🛡','Obrana KARMOU: efekt se odrazí zpět na útočníka.'),
-    'GRANÁT': '<p><strong>Všichni hráči kromě útočníka</strong> si líznou 1 kartu.</p>' + n('ok','🛡','Obrana KARMOU: útočník lízne tolik karet, kolik je hráčů u stolu.'),
-    'ŠATLAVA': '<p>Cílový hráč (bezprostředně další) <strong>stojí 1 kolo a lízne 2 karty.</strong></p>' + n('warn','⛔','Eso nezachraňuje od ŠATLAVY.') + n('ok','🛡','Obrana KARMOU: efekt se odrazí zpět na útočníka.'),
-    'SNAJPR': '<p>Vyber <strong>libovolného hráče.</strong> Vybraný si lízne 2 karty. Hra pokračuje dalším hráčem za zasaženým.</p>' + n('ok','🛡','Obrana KARMOU: trest se přenese na útočníka.'),
+    'ŠMÍRÁK': '<p>Cílový hráč (bezprostředně další) musí <strong>vyložit všechny karty z ruky lícem nahoru</strong> — ostatní hráči je vidí. Nové karty bere zpět skrytě.</p>' + n('ok','🛡','Obrana ZMRDEM: efekt se odrazí zpět na útočníka.'),
+    'GRANÁT': '<p><strong>Všichni hráči kromě útočníka</strong> si líznou 1 kartu.</p>' + n('ok','🛡','Obrana ZMRDEM: útočník lízne tolik karet, kolik je hráčů u stolu.'),
+    'ŠATLAVA': '<p>Cílový hráč (bezprostředně další) <strong>stojí 1 kolo a lízne 2 karty.</strong></p>' + n('warn','⛔','Eso nezachraňuje od ŠATLAVY.') + n('ok','🛡','Obrana ZMRDEM: efekt se odrazí zpět na útočníka.'),
+    'SNAJPR': '<p>Vyber <strong>libovolného hráče.</strong> Vybraný si lízne 2 karty. Hra pokračuje dalším hráčem za zasaženým.</p>' + n('ok','🛡','Obrana ZMRDEM: trest se přenese na útočníka.'),
     'ČENDŽR': '<p>Zvol barvu. <strong>Všichni hráči musí hrát tuto barvu,</strong> dokud se tah nevrátí zpět k tobě.</p>' + n('warn','⚠','Nemáš požadovanou barvu? Musíš líznout 2 karty a tah přejde dál.'),
-    'KARMA': '<p>Lze zahrát na jakoukoli barvu. Při hraní řekni, co napodobuje (např. <em>„červenou 7"</em>).</p><p>Může napodobit <strong>jakoukoli základní kartu kromě 8</strong>. Efekt napodobené karty se spustí normálně.</p><p>Ve hře jsou <strong>2 kusy KARMY.</strong> Při aktivním řetězu 7 slouží pouze jako 7.</p>' + n('ok','🛡','Obrana: u ŠMÍRÁKA, GRANÁTU, SNAJPRA a ŠATLAVY odrazí útok zpět.') + n('warn','⚠','Speciálem nelze vyhrát.'),
-    'TROJKA': '<p>Cílový hráč (bezprostředně další) si musí líznout <strong>3 karty.</strong></p>' + n('warn','⛔','Neobrátitelné — KARMA ani jiná obrana nepomáhá.'),
-    'SPOCK': '<p>Vyber libovolného hráče. <strong>Vyměníte si všechny karty v ruce.</strong> Lícové karty na stole zůstávají beze změny.</p>' + n('warn','⛔','Neobrátitelné — KARMA nepomáhá.'),
-    'STOP': '<p>Cílový hráč (bezprostředně další) <strong>stojí 2 celá kola</strong> (přeskočí 2 tahy).</p>' + n('warn','⛔','Neobrátitelné — KARMA ani Eso nepomáhají.')
+    'ZMRD': '<p>Lze zahrát na jakoukoli barvu. Při hraní řekni, co napodobuje (např. <em>„červenou 7"</em>).</p><p>Může napodobit <strong>jakoukoli základní kartu kromě 8</strong>. Efekt napodobené karty se spustí normálně.</p><p>Ve hře jsou <strong>2 kusy ZMRDA.</strong> Při aktivním řetězu 7 slouží pouze jako 7.</p>' + n('ok','🛡','Obrana: u ŠMÍRÁKA, GRANÁTU, SNAJPRA a ŠATLAVY odrazí útok zpět.') + n('warn','⚠','Speciálem nelze vyhrát.'),
+    'TROJKA': '<p>Cílový hráč (bezprostředně další) si musí líznout <strong>3 karty.</strong></p>' + n('warn','⛔','Neobrátitelné — ZMRD ani jiná obrana nepomáhá.'),
+    'SPOCK': '<p>Vyber libovolného hráče. <strong>Vyměníte si všechny karty v ruce.</strong> Lícové karty na stole zůstávají beze změny.</p>' + n('warn','⛔','Neobrátitelné — ZMRD nepomáhá.'),
+    'STOP': '<p>Cílový hráč (bezprostředně další) <strong>stojí 2 celá kola</strong> (přeskočí 2 tahy).</p>' + n('warn','⛔','Neobrátitelné — ZMRD ani Eso nepomáhají.')
   };
   return descs[key] || '<p>Bez speciálního efektu.</p>';
 }
